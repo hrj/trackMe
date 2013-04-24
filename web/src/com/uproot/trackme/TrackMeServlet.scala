@@ -28,23 +28,23 @@ class TrackMeServlet extends HttpServlet {
 
     val common = new CommonFunctions(req)
 
-    val result = ((req.getPathInfo()).split("/")).filter(_.length != 0).toList match {
+    val result = common.requestPath match {
       case Nil => Redirect("/web/home")
       case "web" :: page :: Nil => {
         common.webAuthentication { userId: String =>
           page match {
             case "home" => common.homePage(userId)
             case "settings" => common.settingsPage
-            case _ => XmlContent(<b>Page Not Found!!!</b>)
+            case _ => XmlContent(common.fileNotFound)
           }
         }
       }
       case "api" :: operation :: Nil =>
         operation match {
           case "retrieve" => common.retrieveLocations
-          case _ => XmlContent(<b>Page Not Found!!!</b>)
+          case _ => XmlContent(common.fileNotFound)
         }
-      case _ => XmlContent(<b>Page Not Found!!!</b>)
+      case _ => XmlContent(common.fileNotFound)
     }
 
     common.sendResponse(result, resp)
@@ -54,23 +54,21 @@ class TrackMeServlet extends HttpServlet {
 
     val common = new CommonFunctions(req)
 
-    val result = ((req.getPathInfo()).split("/")).filter(_.length != 0).toList match {
+    val result = common.requestPath match {
       case "web" :: page :: Nil => {
         common.webAuthentication { userId: String =>
           page match {
-            case "home" => common.homePage(userId)
             case "settings" => common.updateSettings
-            case _ => XmlContent(<b>Page Not Found!!!</b>)
+            case _ => XmlContent(common.fileNotFound)
           }
         }
       }
       case "api" :: operation :: Nil =>
         operation match {
           case "store" => common.storeLocations
-          case "retrieve" => common.retrieveLocations
-          case _ => XmlContent(<b>Page Not Found!!!</b>)
+          case _ => XmlContent(common.fileNotFound)
         }
-      case _ => XmlContent(<b>Page Not Found!!!</b>)
+      case _ => XmlContent(common.fileNotFound)
     }
 
     common.sendResponse(result, resp)
