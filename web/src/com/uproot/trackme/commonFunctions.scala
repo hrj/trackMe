@@ -25,17 +25,26 @@ import com.google.appengine.api.datastore.EntityNotFoundException
 
 class CommonFunctions(req: HttpServletRequest) {
 
-  val USER_ID = "userID"
-  val USER_DETAILS = "userDetails"
-  val PASS_KEY = "passKey"
-  val FILE_NOT_FOUND = <p>File Not Found</p>
-  val userService = UserServiceFactory.getUserService
-  val thisURL = req.getRequestURI
-  val userPrincipal = req.getUserPrincipal
-  val datastore = DatastoreServiceFactory.getDatastoreService
+  private val USER_ID = "userID"
+  private val USER_DETAILS = "userDetails"
+  private val PASS_KEY = "passKey"
+  private val FILE_NOT_FOUND = <p>File Not Found</p>
+  private val userService = UserServiceFactory.getUserService
+  private val thisURL = req.getRequestURI
+  private val userPrincipal = req.getUserPrincipal
+  private val datastore = DatastoreServiceFactory.getDatastoreService
 
-  def requestPath = ((req.getPathInfo()).split("/")).filter(_.length != 0).toList
+  val fileNotFound = XmlContent(createTemplate(FILE_NOT_FOUND), 404)
 
+  val requestPath = ((req.getPathInfo()).split("/")).filter(_.length != 0).toList
+
+  def userSettingsForm(userId: String, passKey: String) = <form action="/web/settings" method="post">
+                                                            <label>UserId : { userId }</label>
+                                                            <label>
+                                                              Pass Key :<input type="text" name="passKey" value={ passKey }/>
+                                                            </label><br/>
+                                                            <input type="submit"/>
+                                                          </form>
   def createTemplate(body: xml.Node) = {
     <html>
       <head>
@@ -56,39 +65,27 @@ class CommonFunctions(req: HttpServletRequest) {
     </html>
   }
 
-  def fileNotFound = createTemplate(FILE_NOT_FOUND)
-
   def updateSettings() = {
     val userID = req.getUserPrincipal.getName
     val passKey = req.getParameter("passKey")
-    val trackMeKey = KeyFactory.createKey(USER_DETAILS, userID)
-    val userDetails = new Entity(trackMeKey)
-    userDetails.setProperty(USER_ID, userID)
-    userDetails.setProperty("passKey", passKey)
-    datastore.put(userDetails)
+    val userKey = KeyFactory.createKey(USER_DETAILS, userID)
+    val userEntity = new Entity(userKey)
+    userEntity.setProperty(USER_ID, userID)
+    userEntity.setProperty("passKey", passKey)
+    datastore.put(userEntity)
     settingsPage
   }
 
   def settingsPage() = {
     val userId = req.getUserPrincipal.getName
     if (userExists(userId)) {
-      val userIDKey = KeyFactory.createKey(USER_DETAILS, userId)
-      val userEntity = datastore.get(userIDKey)
+      val userKey = KeyFactory.createKey(USER_DETAILS, userId)
+      val userEntity = datastore.get(userKey)
       println(userEntity)
       val passKey = userEntity.getProperty("passKey").toString
-      XmlContent(createTemplate(
-        <form action="/web/settings" method="post">
-          <label>UserId : <input type="text" value={ userId }/></label>
-          <label>Pass Key : <input type="text" name="passKey" value={ passKey }/></label><br/>
-          <input type="submit"/>
-        </form>))
+      XmlContent(createTemplate(userSettingsForm(userId, passKey)))
     } else {
-      XmlContent(createTemplate(
-        <form action="/web/settings" method="post">
-          <label>UserId : <input type="text" value={ userId }/></label>
-          <label>Pass Key : <input type="text" name="passKey"/></label><br/>
-          <input type="submit"/>
-        </form>))
+      XmlContent(createTemplate(userSettingsForm(userId, "")))
     }
 
   }
@@ -116,7 +113,7 @@ class CommonFunctions(req: HttpServletRequest) {
       val userEntity = datastore.get(userKey)
       true
     } catch {
-      case _ => false 
+      case _ => false
     }
   }
 
@@ -138,28 +135,27 @@ class CommonFunctions(req: HttpServletRequest) {
     val sessionDetails = xml.XML.load(inputStream)
     val sessionDet = new Session(sessionDetails)
 
-    val userExistsFilter = new FilterPredicate(USER_ID, FilterOperator.EQUAL, sessionDet.userID)
-
-    val passKeyCheckFilter = new FilterPredicate(PASS_KEY, FilterOperator.EQUAL, sessionDet.passKey)
-
-    val userVerificationFilter = CompositeFilterOperator.and(userExistsFilter, passKeyCheckFilter)
-
-    val query = new Query(USER_DETAILS).setFilter(userVerificationFilter)
-
-    val pq = datastore.prepare(query).asSingleEntity
-    if (pq == null) {
-      XmlContent(ResponseStatus(false, "User Does no exist or wrong PassKey").mkXML)
-    } else {
-      val sessionKey = KeyFactory.createKey(USER_ID, "trackMe")
-      sessionDet.locationDetails.foreach { loc =>
-        val userID = new Entity("tmUser_" + sessionDet.userID, sessionKey)
-        userID.setProperty("latitude", loc.latLong.latitude)
-        userID.setProperty("longitude", loc.latLong.longitude)
-        userID.setProperty("accuracy", loc.accuracy)
-        userID.setProperty("timeStamp", loc.timeStamp)
-        datastore.put(userID)
+    val userKey = KeyFactory.createKey(USER_DETAILS, sessionDet.userID)
+    try {
+      val userEntity = datastore.get(userKey)
+      val dsUserID = userEntity.getProperty("userID")
+      val dsPassKey = userEntity.getProperty("passKey")
+      if (dsUserID == sessionDet.userID && dsPassKey == sessionDet.passKey) {
+        val locationEntities: List[Entity] = sessionDet.locationDetails.map { loc =>
+          val userID = new Entity("tmUser_" + sessionDet.userID)
+          userID.setProperty("latitude", loc.latLong.latitude)
+          userID.setProperty("longitude", loc.latLong.longitude)
+          userID.setProperty("accuracy", loc.accuracy)
+          userID.setProperty("timeStamp", loc.timeStamp)
+          userID
+        }
+        datastore.put(locationEntities.asJava)
+        XmlContent(ResponseStatus(true, "Location added successfuly").mkXML)
+      } else {
+        XmlContent(ResponseStatus(false, "Wrong UserID or PassKey").mkXML)
       }
-      XmlContent(ResponseStatus(true, "Location added successfuly").mkXML)
+    } catch {
+      case _ => XmlContent(ResponseStatus(false, "User Does not Exist").mkXML)
     }
   }
 
