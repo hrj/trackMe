@@ -46,7 +46,7 @@ class CommonFunctions(req: HttpServletRequest) {
       </label><br/>
       <input type="submit"/>
     </form>
-        
+
   def createTemplate(body: xml.Node) = {
     <html>
       <head>
@@ -164,18 +164,17 @@ class CommonFunctions(req: HttpServletRequest) {
 
   def retrieveLocations = {
     val userId = req.getUserPrincipal.getName
-    val userFilter = new FilterPredicate("userID", FilterOperator.EQUAL, userId)
-    val userQuery = new Query(USER_DETAILS).setFilter(userFilter)
-    val userExists = datastore.prepare(userQuery).asSingleEntity
-    if (userExists != null) {
-      val query = new Query(userId)
+    val userKey = KeyFactory.createKey(USER_DETAILS, userId)
+    try {
+      val userEntity = datastore.get(userKey)
+      val query = new Query("tmUser_" + userId)
       val pq = datastore.prepare(query).asIterable.asScala
       val locations = pq.map { location =>
-        LatLong(location.getProperty("longitude").toString.toDouble, location.getProperty("latitude").toString.toDouble)
+        LatLong(location.getProperty("longitude").asInstanceOf[Double], location.getProperty("latitude").asInstanceOf[Double])
       }
       JsonContent("{\"locations\":[" + (locations.map(_.mkJSON)).mkString(",") + "]}")
-    } else {
-      JsonContent(ResponseStatus(false, "Cannot Retrieve as the user does not exists!").mkJson)
+    } catch {
+      case _ => JsonContent(ResponseStatus(false, "Cannot Retrieve as the user does not exists!").mkJson)
     }
   }
 
