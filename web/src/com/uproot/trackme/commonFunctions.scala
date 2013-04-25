@@ -38,13 +38,15 @@ class CommonFunctions(req: HttpServletRequest) {
 
   val requestPath = ((req.getPathInfo()).split("/")).filter(_.length != 0).toList
 
-  def userSettingsForm(userId: String, passKey: String) = <form action="/web/settings" method="post">
-                                                            <label>UserId : { userId }</label>
-                                                            <label>
-                                                              Pass Key :<input type="text" name="passKey" value={ passKey }/>
-                                                            </label><br/>
-                                                            <input type="submit"/>
-                                                          </form>
+  def userSettingsForm(userId: String, passKey: String) =
+    <form action="/web/settings" method="post">
+      <label>UserId : { userId }</label>
+      <label>
+        Pass Key :<input type="text" name="passKey" value={ passKey }/>
+      </label><br/>
+      <input type="submit"/>
+    </form>
+        
   def createTemplate(body: xml.Node) = {
     <html>
       <head>
@@ -78,16 +80,17 @@ class CommonFunctions(req: HttpServletRequest) {
 
   def settingsPage() = {
     val userId = req.getUserPrincipal.getName
-    if (userExists(userId)) {
-      val userKey = KeyFactory.createKey(USER_DETAILS, userId)
-      val userEntity = datastore.get(userKey)
-      println(userEntity)
-      val passKey = userEntity.getProperty("passKey").toString
-      XmlContent(createTemplate(userSettingsForm(userId, passKey)))
-    } else {
-      XmlContent(createTemplate(userSettingsForm(userId, "")))
-    }
-
+    val settingsForm =
+      if (userExists(userId)) {
+        val userKey = KeyFactory.createKey(USER_DETAILS, userId)
+        val userEntity = datastore.get(userKey)
+        println(userEntity)
+        val passKey = userEntity.getProperty("passKey").toString
+        userSettingsForm(userId, passKey)
+      } else {
+        (userSettingsForm(userId, ""))
+      }
+    XmlContent(createTemplate(settingsForm))
   }
 
   def webAuthentication(f: (String) => Result) = {
