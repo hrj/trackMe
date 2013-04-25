@@ -84,7 +84,6 @@ class CommonFunctions(req: HttpServletRequest) {
       if (userExists(userId)) {
         val userKey = KeyFactory.createKey(USER_DETAILS, userId)
         val userEntity = datastore.get(userKey)
-        println(userEntity)
         val passKey = userEntity.getProperty("passKey").toString
         userSettingsForm(userId, passKey)
       } else {
