@@ -39,13 +39,13 @@ class TrackMeServlet extends HttpServlet {
           }
         }
       }
-      case "api" :: operation :: Nil => {
-        common.apiAuthentication {
+      case "api" :: format :: operation :: Nil => {
+        common.apiAuthentication(format, {
           operation match {
             case "retrieve" => common.retrieveLocations
             case _ => common.fileNotFound
           }
-        }
+        })
       }
       case _ => common.fileNotFound
     }
@@ -66,13 +66,13 @@ class TrackMeServlet extends HttpServlet {
           }
         }
       }
-      case "api" :: operation :: Nil => {
-        common.apiAuthentication {
+      case "api" :: format :: operation :: Nil => {
+        common.apiAuthentication(format, {
           operation match {
             case "store" => common.storeLocations
             case _ => common.fileNotFound
           }
-        }
+        })
       }
       case _ => common.fileNotFound
     }

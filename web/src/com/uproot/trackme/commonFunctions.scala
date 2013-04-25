@@ -102,11 +102,15 @@ class CommonFunctions(req: HttpServletRequest) {
     }
   }
 
-  def apiAuthentication(f: => Result) = {
+  def apiAuthentication(format: String, f: => Result) = {
     if (userPrincipal != null || (req.getHeader("userID") != null && req.getHeader("passkey") != null)) {
       f
     } else {
-      XmlContent(createTemplate(<p>User not authenticated</p>))
+      format match {
+        case "xml" => XmlContent(ResponseStatus(false, "User Does not Exist").mkXML)
+        case "json" => JsonContent(ResponseStatus(false, "Cannot Retrieve as the user does not exists!").mkJson)
+      }
+
     }
   }
 
