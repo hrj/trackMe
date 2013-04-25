@@ -135,12 +135,7 @@ class CommonFunctions(req: HttpServletRequest) {
       case _ => req.getInputStream
     }
 
-    println(req.getHeader("userID") + "userID Param")
-    println(req.getHeader("passkey") + "passKey param")
-
-    println(req.getContentLength())
     val sessionDetails = xml.XML.load(inputStream)
-    println((sessionDetails \ "location" take 5).mkString("\n"))
     val sessionDet = new Session(sessionDetails)
 
     val userExistsFilter = new FilterPredicate(USER_ID, FilterOperator.EQUAL, sessionDet.userID)
@@ -153,7 +148,6 @@ class CommonFunctions(req: HttpServletRequest) {
 
     val pq = datastore.prepare(query).asSingleEntity
     if (pq == null) {
-      println("User Does not exists or wrong passKey")
       XmlContent(ResponseStatus(false, "User Does no exist or wrong PassKey").mkXML)
     } else {
       val sessionKey = KeyFactory.createKey(USER_ID, "trackMe")
@@ -165,7 +159,6 @@ class CommonFunctions(req: HttpServletRequest) {
         userID.setProperty("timeStamp", loc.timeStamp)
         datastore.put(userID)
       }
-      println("Location added successfuly")
       XmlContent(ResponseStatus(true, "Location added successfuly").mkXML)
     }
   }
