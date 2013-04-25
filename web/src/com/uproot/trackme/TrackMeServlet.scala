@@ -35,16 +35,19 @@ class TrackMeServlet extends HttpServlet {
           page match {
             case "home" => common.homePage(userId)
             case "settings" => common.settingsPage
-            case _ => XmlContent(common.fileNotFound)
+            case _ => XmlContent(common.fileNotFound, 404)
           }
         }
       }
-      case "api" :: operation :: Nil =>
-        operation match {
-          case "retrieve" => common.retrieveLocations
-          case _ => XmlContent(common.fileNotFound)
+      case "api" :: operation :: Nil => {
+        common.apiAuthentication {
+          operation match {
+            case "retrieve" => common.retrieveLocations
+            case _ => XmlContent(common.fileNotFound, 404)
+          }
         }
-      case _ => XmlContent(common.fileNotFound)
+      }
+      case _ => XmlContent(common.fileNotFound, 404)
     }
 
     common.sendResponse(result, resp)
@@ -59,16 +62,19 @@ class TrackMeServlet extends HttpServlet {
         common.webAuthentication { userId: String =>
           page match {
             case "settings" => common.updateSettings
-            case _ => XmlContent(common.fileNotFound)
+            case _ => XmlContent(common.fileNotFound, 404)
           }
         }
       }
-      case "api" :: operation :: Nil =>
-        operation match {
-          case "store" => common.storeLocations
-          case _ => XmlContent(common.fileNotFound)
+      case "api" :: operation :: Nil => {
+        common.apiAuthentication {
+          operation match {
+            case "store" => common.storeLocations
+            case _ => XmlContent(common.fileNotFound, 404)
+          }
         }
-      case _ => XmlContent(common.fileNotFound)
+      }
+      case _ => XmlContent(common.fileNotFound, 404)
     }
 
     common.sendResponse(result, resp)

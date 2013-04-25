@@ -1,9 +1,8 @@
 package com.uproot.trackme;
 
-import xyz._
 
-object xyz {
-  implicit class Loc(n: xml.Node) {
+object implicitObject {
+  implicit class XMLHelper (n: xml.Node) {
     def attr(name: String) = n.attribute(name).get(0).text
     def attrDouble(name: String) = n.attr(name).toDouble
     def attrInt(name: String) = n.attr(name).toInt
@@ -11,8 +10,10 @@ object xyz {
   }
 }
 
-case class Location(latitude: Double, longitude: Double, accuracy: Int, timeStamp: Long) {
-  def this(locDetails: scala.xml.Node) = this(locDetails.attrDouble("latitude"), locDetails.attrDouble("longitude"),
+import implicitObject._
+
+case class Location(latLong: LatLong, accuracy: Int, timeStamp: Long) {
+  def this(locDetails: scala.xml.Node) = this(LatLong(locDetails.attrDouble("latitude"), locDetails.attrDouble("longitude")),
     locDetails.attrInt("accuracy"), locDetails.attrLong("timestamp"))
 }
 
@@ -22,5 +23,5 @@ case class Session(id: String, userID: String, passKey: String, locationDetails:
 }
 
 case class LatLong(longitude: Double, latitude: Double) {
-  def mkJSON() = "{\"long\":" + longitude + ", \"lat\":" + latitude + "}"
+  def mkJSON = "{\"long\":" + longitude + ", \"lat\":" + latitude + "}"
 }

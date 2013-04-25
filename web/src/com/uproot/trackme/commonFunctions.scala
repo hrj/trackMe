@@ -21,6 +21,7 @@ import com.google.appengine.api.datastore.Query.CompositeFilter
 import com.google.appengine.api.datastore.Query.CompositeFilterOperator
 import java.util.zip.GZIPInputStream
 import collection.JavaConverters._
+import com.google.appengine.api.datastore.EntityNotFoundException
 
 class CommonFunctions(req: HttpServletRequest) {
 
@@ -58,10 +59,11 @@ class CommonFunctions(req: HttpServletRequest) {
   def fileNotFound = createTemplate(FILE_NOT_FOUND)
 
   def updateSettings() = {
+    val userID = req.getUserPrincipal.getName
     val passKey = req.getParameter("passKey")
-    val trackMeKey = KeyFactory.createKey(USER_DETAILS, "testtrackme")
-    val userDetails = new Entity(USER_DETAILS, trackMeKey)
-    userDetails.setProperty(USER_ID, req.getUserPrincipal.getName)
+    val trackMeKey = KeyFactory.createKey(USER_DETAILS, userID)
+    val userDetails = new Entity(trackMeKey)
+    userDetails.setProperty(USER_ID, userID)
     userDetails.setProperty("passKey", passKey)
     datastore.put(userDetails)
     settingsPage
@@ -70,12 +72,16 @@ class CommonFunctions(req: HttpServletRequest) {
   def settingsPage() = {
     val userId = req.getUserPrincipal.getName
     if (userExists(userId)) {
-      val userExists = new FilterPredicate(USER_ID, FilterOperator.EQUAL, userId)
-      val query = new Query(USER_DETAILS).setFilter(userExists)
-      val pq = datastore.prepare(query).asSingleEntity
-      val passKey = pq.getProperty("passKey").toString
-      XmlContent(createTemplate(xml.Group(Seq(<label>UserId : <input type="text" value={ userId }></input></label>,
-        <label>PassKey : <input type="text" value={ passKey }></input></label>))))
+      val userIDKey = KeyFactory.createKey(USER_DETAILS, userId)
+      val userEntity = datastore.get(userIDKey)
+      println(userEntity)
+      val passKey = userEntity.getProperty("passKey").toString
+      XmlContent(createTemplate(
+        <form action="/web/settings" method="post">
+          <label>UserId : <input type="text" value={ userId }/></label>
+          <label>Pass Key : <input type="text" name="passKey" value={ passKey }/></label><br/>
+          <input type="submit"/>
+        </form>))
     } else {
       XmlContent(createTemplate(
         <form action="/web/settings" method="post">
@@ -96,12 +102,22 @@ class CommonFunctions(req: HttpServletRequest) {
     }
   }
 
-  def userExists(userId: String) = {
-    val userExists = new FilterPredicate(USER_ID, FilterOperator.EQUAL, userId)
-    val query = new Query(USER_DETAILS).setFilter(userExists)
-    val pq = datastore.prepare(query).asSingleEntity()
+  def apiAuthentication(f: => Result) = {
+    if (userPrincipal != null || (req.getHeader("userID") != null && req.getHeader("passkey") != null)) {
+      f
+    } else {
+      XmlContent(createTemplate(<p>User not authenticated</p>))
+    }
+  }
 
-    pq != null
+  def userExists(userId: String) = {
+    val userKey = KeyFactory.createKey(USER_DETAILS, userId)
+    try {
+      val userEntity = datastore.get(userKey)
+      true
+    } catch {
+      case _ => false 
+    }
   }
 
   def homePage(userId: String) = {
@@ -119,6 +135,9 @@ class CommonFunctions(req: HttpServletRequest) {
       case _ => req.getInputStream
     }
 
+    println(req.getHeader("userID") + "userID Param")
+    println(req.getHeader("passkey") + "passKey param")
+
     println(req.getContentLength())
     val sessionDetails = xml.XML.load(inputStream)
     println((sessionDetails \ "location" take 5).mkString("\n"))
@@ -135,19 +154,19 @@ class CommonFunctions(req: HttpServletRequest) {
     val pq = datastore.prepare(query).asSingleEntity
     if (pq == null) {
       println("User Does not exists or wrong passKey")
-      XmlContent(<p>User Does no exist or wrong PassKey</p>)
+      XmlContent(ResponseStatus(false, "User Does no exist or wrong PassKey").mkXML)
     } else {
       val sessionKey = KeyFactory.createKey(USER_ID, "trackMe")
       sessionDet.locationDetails.foreach { loc =>
         val userID = new Entity("tmUser_" + sessionDet.userID, sessionKey)
-        userID.setProperty("latitude", loc.latitude.toDouble)
-        userID.setProperty("longitude", loc.longitude.toDouble)
+        userID.setProperty("latitude", loc.latLong.latitude)
+        userID.setProperty("longitude", loc.latLong.longitude)
         userID.setProperty("accuracy", loc.accuracy)
         userID.setProperty("timeStamp", loc.timeStamp)
         datastore.put(userID)
       }
       println("Location added successfuly")
-      XmlContent(<p>Location added successfuly</p>)
+      XmlContent(ResponseStatus(true, "Location added successfuly").mkXML)
     }
   }
 
@@ -162,20 +181,22 @@ class CommonFunctions(req: HttpServletRequest) {
       val locations = pq.map { location =>
         LatLong(location.getProperty("longitude").toString.toDouble, location.getProperty("latitude").toString.toDouble)
       }
-      JsonContent("{\"locations\":[" + (locations.map(_.mkJSON())).mkString(",") + "]}")
+      JsonContent("{\"locations\":[" + (locations.map(_.mkJSON)).mkString(",") + "]}")
     } else {
-      JsonContent("""{errorMessage:"Cannot Retrieve since the user does not Exists!"}""")
+      JsonContent(ResponseStatus(false, "Cannot Retrieve as the user does not exists!").mkJson)
     }
   }
 
   def sendResponse(result: Result, resp: HttpServletResponse) {
     result match {
       case c: Content => {
+        resp.setStatus(c.responseCode)
         resp.setContentType(c.contentType)
-        resp.getWriter.println(c.content)
+        resp.getWriter.write(c.content)
+        resp.flushBuffer
       }
       case Redirect(url) => {
-        resp.sendRedirect((url).toString)
+        resp.sendRedirect(url.toString)
       }
     }
   }
