@@ -2,7 +2,7 @@
   function toDegree(radian){
 	  return (radian * 180) / Math.PI;
   }
-  function updateMap(map, layer){
+  function updateMap(map){
       $.get("http://localhost:8888/api/retrieve",function(serverLocations ,status){
     	  if( lineLayer && markers){
     		  map.removeLayer(lineLayer);
@@ -57,6 +57,6 @@
           map.addControl(new OpenLayers.Control.LayerSwitcher());
     	  map.setCenter(new OpenLayers.LonLat(0, 0), 000000000); 
     	  $("#mapUpdate").click(function () {
-    		  updateMap(map, layer);
+    		  updateMap(map);
     		  });
   });
