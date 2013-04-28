@@ -18,12 +18,15 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import com.google.appengine.api.datastore.Query.CompositeFilterOperator
 import com.google.appengine.api.datastore.EntityNotFoundException
+import com.google.appengine.api.datastore.Query.SortDirection
+import com.google.appengine.api.datastore.FetchOptions
 
 class CommonFunctions(req: HttpServletRequest) {
 
   private val USER_ID = "userID"
   private val USER_DETAILS = "userDetails"
   private val PASS_KEY = "passKey"
+  private val LOCATIONS = "locations"
   private val FILE_NOT_FOUND = <p>File Not Found</p>
   private val userService = UserServiceFactory.getUserService
   private val thisURL = req.getRequestURI
@@ -165,7 +168,7 @@ class CommonFunctions(req: HttpServletRequest) {
     val usersSharedFrom = datastore.prepare(q).asIterable.asScala.toSeq
     if (usersSharedFrom.nonEmpty) {
       usersSharedFrom.map(_.getProperty("userID").asInstanceOf[String])
-    } else Nil 
+    } else Nil
   }
 
   def getSharingDetails(userID: String) = {
@@ -204,12 +207,12 @@ class CommonFunctions(req: HttpServletRequest) {
       val dsPassKey = userEntity.getProperty("passKey")
       if (dsUserID == sessionDet.userID && dsPassKey == sessionDet.passKey) {
         val locationEntities: List[Entity] = sessionDet.locationDetails.map { loc =>
-          val userID = new Entity("tmUser_" + sessionDet.userID)
-          userID.setProperty("latitude", loc.latLong.latitude)
-          userID.setProperty("longitude", loc.latLong.longitude)
-          userID.setProperty("accuracy", loc.accuracy)
-          userID.setProperty("timeStamp", loc.timeStamp)
-          userID
+          val userLocations = new Entity(LOCATIONS, userKey)
+          userLocations.setProperty("latitude", loc.latLong.latitude)
+          userLocations.setProperty("longitude", loc.latLong.longitude)
+          userLocations.setProperty("accuracy", loc.accuracy)
+          userLocations.setProperty("timeStamp", loc.timeStamp)
+          userLocations
         }
         datastore.put(locationEntities.asJava)
         XmlContent(ResponseStatus(true, "Location added successfuly").mkXML)
@@ -221,19 +224,36 @@ class CommonFunctions(req: HttpServletRequest) {
     }
   }
 
+  def sharedLocationsMkJson(sharedLocations: Seq[(String, LatLong)]) = {
+    "\"sharedLocations\":" + sharedLocations.map { user =>
+      user._1 + ":" + user._2.mkJSON
+    }.mkString("{", ",", "}")
+  }
+  
+  def getLastLocations(userID: String) = {
+    sharedFrom(userID).flatMap { sharer =>
+      val userKey = KeyFactory.createKey(USER_DETAILS, sharer)
+      val userQuery = new Query(LOCATIONS).setAncestor(userKey)addSort("timeStamp", SortDirection.DESCENDING)
+      val usersLastLocation = ((datastore.prepare(userQuery)).asList(FetchOptions.Builder.withLimit(1))).asScala.headOption
+      usersLastLocation.map { location =>
+        (sharer, LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double]))
+      }
+    }
+  }
+
   def retrieveLocations = {
     val userId = req.getUserPrincipal.getName
     val userKey = KeyFactory.createKey(USER_DETAILS, userId)
     try {
-      val userEntity = datastore.get(userKey)
-      val query = new Query("tmUser_" + userId)
-      val pq = datastore.prepare(query).asIterable.asScala
-      val locations = pq.map { location =>
-        LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double])
-      }
-      JsonContent("{\"locations\":[" + (locations.map(_.mkJSON)).mkString(",") + "]}")
+      val query = new Query(LOCATIONS).setAncestor(userKey)
+      val locations = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10)).asScala
+      val myLocations = (locations.map { location =>
+        (LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double])).mkJSON
+      }).mkString("\"locations\":[", ",", "]")
+      val sharedLocations = sharedLocationsMkJson(getLastLocations(userId))
+      JsonContent(List(myLocations, sharedLocations).mkString("{", ",", "}"))
     } catch {
-      case _ => JsonContent(ResponseStatus(false, "Cannot Retrieve as the user does not exists!").mkJson)
+      case _ => JsonContent(ResponseStatus(false, "Cannot Retrieve as there are no locations stored for this user!").mkJson)
     }
   }
 
