@@ -61,7 +61,7 @@ class CommonFunctions(req: HttpServletRequest) {
 
     <html>
       <head>
-        <script src="/static/js/jquery.min.js"></script>
+        <script src="/static/js/jquery-1.9.1.min.js"></script>
         <link rel="stylesheet" href="/static/style/style.css" type="text/css"></link>
         <script src="/static/js/OpenLayers.js"></script>
         <script src="/static/js/locationsDisplay.js"></script>
@@ -224,16 +224,18 @@ class CommonFunctions(req: HttpServletRequest) {
     }
   }
 
+  private def quote(value: String) = "\"" + value + "\""
+
   def sharedLocationsMkJson(sharedLocations: Seq[(String, LatLong)]) = {
     "\"sharedLocations\":" + sharedLocations.map { user =>
-      user._1 + ":" + user._2.mkJSON
+      quote(user._1) + ":" + user._2.mkJSON
     }.mkString("{", ",", "}")
   }
-  
+
   def getLastLocations(userID: String) = {
     sharedFrom(userID).flatMap { sharer =>
       val userKey = KeyFactory.createKey(USER_DETAILS, sharer)
-      val userQuery = new Query(LOCATIONS).setAncestor(userKey)addSort("timeStamp", SortDirection.DESCENDING)
+      val userQuery = new Query(LOCATIONS).setAncestor(userKey) addSort ("timeStamp", SortDirection.DESCENDING)
       val usersLastLocation = ((datastore.prepare(userQuery)).asList(FetchOptions.Builder.withLimit(1))).asScala.headOption
       usersLastLocation.map { location =>
         (sharer, LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double]))
