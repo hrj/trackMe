@@ -1,26 +1,22 @@
 package com.uproot.trackme
 
-import java.io.IOException
 import java.security.Principal
-import java.util.Enumeration
-import javax.servlet.http.HttpServlet
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import java.util.ArrayList
+import java.util.zip.GZIPInputStream
+import scala.collection.JavaConverters._
 import com.google.appengine.api.datastore.DatastoreService
 import com.google.appengine.api.datastore.DatastoreServiceFactory
 import com.google.appengine.api.datastore.Entity
 import com.google.appengine.api.datastore.Key
 import com.google.appengine.api.datastore.KeyFactory
 import com.google.appengine.api.datastore.Query
-import com.google.appengine.api.datastore.Query.Filter
 import com.google.appengine.api.datastore.Query.FilterOperator
 import com.google.appengine.api.datastore.Query.FilterPredicate
 import com.google.appengine.api.users.UserService
 import com.google.appengine.api.users.UserServiceFactory
-import com.google.appengine.api.datastore.Query.CompositeFilter
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 import com.google.appengine.api.datastore.Query.CompositeFilterOperator
-import java.util.zip.GZIPInputStream
-import collection.JavaConverters._
 import com.google.appengine.api.datastore.EntityNotFoundException
 
 class CommonFunctions(req: HttpServletRequest) {
@@ -38,16 +34,28 @@ class CommonFunctions(req: HttpServletRequest) {
 
   val requestPath = ((req.getPathInfo()).split("/")).filter(_.length != 0).toList
 
-  def userSettingsForm(userId: String, passKey: String) =
+  val test = XmlContent(createTemplate(<form action="/web/test" method="post">
+                                         <label>
+                                           Pass Key :<input type="text" name="passKey" value=""/>
+                                         </label><br/>
+                                         <input type="submit"/>
+                                       </form>))
+
+  def userSettingsForm(userId: String, passKey: String, sharedWith: String) =
     <form action="/web/settings" method="post">
       <label>UserId : { userId }</label>
       <label>
         Pass Key :<input type="text" name="passKey" value={ passKey }/>
       </label><br/>
+      <label>
+        Share With :<input type="text" name="shareWith" value={ sharedWith }/>
+      </label><br/>
       <input type="submit"/>
     </form>
 
   def createTemplate(body: xml.Node) = {
+    val userID = if (req.getUserPrincipal == null) "hello" else req.getUserPrincipal.getName
+
     <html>
       <head>
         <script src="/static/js/jquery.min.js"></script>
@@ -61,7 +69,7 @@ class CommonFunctions(req: HttpServletRequest) {
           <li><a href="/web/settings">Settings</a></li>
           <li><a href={ userService.createLogoutURL(thisURL) }>Logout</a></li>
         </ul>
-        <p>Wecome!</p>
+        <p>Wecome! { userID }</p>
         { body }
       </body>
     </html>
@@ -69,11 +77,15 @@ class CommonFunctions(req: HttpServletRequest) {
 
   def updateSettings() = {
     val userID = req.getUserPrincipal.getName
-    val passKey = req.getParameter("passKey")
     val userKey = KeyFactory.createKey(USER_DETAILS, userID)
+    val passKey = req.getParameter("passKey")
+    val shareWith = req.getParameter("shareWith")
     val userEntity = new Entity(userKey)
     userEntity.setProperty(USER_ID, userID)
     userEntity.setProperty("passKey", passKey)
+    if (shareWith.length != 0) {
+      userEntity.setProperty("sharedWith", (shareWith.split(",").toList).asJava)
+    }
     datastore.put(userEntity)
     settingsPage
   }
@@ -85,9 +97,15 @@ class CommonFunctions(req: HttpServletRequest) {
         val userKey = KeyFactory.createKey(USER_DETAILS, userId)
         val userEntity = datastore.get(userKey)
         val passKey = userEntity.getProperty("passKey").toString
-        userSettingsForm(userId, passKey)
+        val sharedWith = userEntity.getProperty("sharedWith")
+        val shared = if (userEntity.hasProperty("sharedWith")) {
+          sharedWith.asInstanceOf[ArrayList[String]].asScala.mkString(",")
+        } else {
+          ""
+        }
+        userSettingsForm(userId, passKey, shared)
       } else {
-        (userSettingsForm(userId, ""))
+        (userSettingsForm(userId, "", ""))
       }
     XmlContent(createTemplate(settingsForm))
   }
@@ -123,10 +141,35 @@ class CommonFunctions(req: HttpServletRequest) {
     }
   }
 
+  def getSharingDetails(userID: String) = {
+    val shareFromFilter = new FilterPredicate("sharedWith", FilterOperator.EQUAL, userID)
+    val q = new Query(USER_DETAILS).setFilter(shareFromFilter)
+    val usersSharedFrom = datastore.prepare(q).asIterable.asScala.toSeq
+    val sharedFrom = if (usersSharedFrom.nonEmpty) {
+      usersSharedFrom.map { p =>
+        <li>{ p.getProperty("userID").asInstanceOf[String] }</li>
+      }
+    } else {
+      <li>No user has shared with you!</li>
+    }
+    val userEntity = datastore.get(KeyFactory.createKey(USER_DETAILS, userID))
+    val sharedWith = if (userEntity.hasProperty("sharedWith")) {
+      val shared = userEntity.getProperty("sharedWith").asInstanceOf[ArrayList[String]]
+      (shared.asScala).map { p =>
+        <li>{ p }</li>
+      }
+    } else {
+      <li>You have not shared with anyone!</li>
+    }
+    <p><h3>Shared From</h3><ul>{ sharedFrom }</ul><h3>Shared With</h3><ul>{ sharedWith }</ul></p>
+  }
+
   def homePage(userId: String) = {
     if (userExists(userId)) {
       XmlContent(createTemplate(
-        xml.Group(Seq(<div id="map" class="bigmap"></div>, <input type="button" value="Refresh" id="mapUpdate"></input>))))
+        xml.Group(Seq(<div id="map" class="bigmap"></div>,
+          <input type="button" value="Refresh" id="mapUpdate"></input>,
+          getSharingDetails(userId)))))
     } else {
       Redirect("/web/settings")
     }
@@ -173,7 +216,7 @@ class CommonFunctions(req: HttpServletRequest) {
       val query = new Query("tmUser_" + userId)
       val pq = datastore.prepare(query).asIterable.asScala
       val locations = pq.map { location =>
-        LatLong(location.getProperty("longitude").asInstanceOf[Double], location.getProperty("latitude").asInstanceOf[Double])
+        LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double])
       }
       JsonContent("{\"locations\":[" + (locations.map(_.mkJSON)).mkString(",") + "]}")
     } catch {

@@ -22,6 +22,6 @@ case class Session(id: String, userID: String, passKey: String, locationDetails:
     (node \ "location").toList.map(new Location(_)))
 }
 
-case class LatLong(longitude: Double, latitude: Double) {
-  def mkJSON = "{\"long\":" + longitude + ", \"lat\":" + latitude + "}"
+case class LatLong(latitude: Double, longitude: Double) {
+  def mkJSON = "{\"lat\":" + latitude + ", \"long\":" + longitude + "}"
 }

@@ -3,7 +3,7 @@
 	  return (radian * 180) / Math.PI;
   }
   function updateMap(map){
-      $.get("http://localhost:8888/api/retrieve",function(serverLocations ,status){
+      $.get("http://localhost:8888/api/json/retrieve",function(serverLocations ,status){
     	  if( lineLayer && markers){
     		  map.removeLayer(lineLayer);
     		  map.removeLayer(markers);
