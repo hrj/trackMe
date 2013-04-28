@@ -1,0 +1,4 @@
+web/.cache
+web/war/WEB-INF/appengine-generated/local_db.bin
+web/war/WEB-INF/classes/
+web/war/WEB-INF/lib/

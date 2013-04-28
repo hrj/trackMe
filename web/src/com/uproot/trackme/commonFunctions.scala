@@ -141,27 +141,40 @@ class CommonFunctions(req: HttpServletRequest) {
     }
   }
 
-  def getSharingDetails(userID: String) = {
+  def mkXMLUserList(userList: Seq[String]) = {
+    if (userList.nonEmpty) {
+      (userList).map(user => <li>{ user }</li>)
+    } else {
+      <li>No Shares!</li>
+    }
+  }
+
+  def sharedWith(userID: String) = {
+    val userEntity = datastore.get(KeyFactory.createKey(USER_DETAILS, userID))
+    if (userEntity.hasProperty("sharedWith")) {
+      val shared = userEntity.getProperty("sharedWith").asInstanceOf[ArrayList[String]]
+      shared.asScala.toSeq
+    } else {
+      Nil
+    }
+  }
+
+  def sharedFrom(userID: String) = {
     val shareFromFilter = new FilterPredicate("sharedWith", FilterOperator.EQUAL, userID)
     val q = new Query(USER_DETAILS).setFilter(shareFromFilter)
     val usersSharedFrom = datastore.prepare(q).asIterable.asScala.toSeq
-    val sharedFrom = if (usersSharedFrom.nonEmpty) {
-      usersSharedFrom.map { p =>
-        <li>{ p.getProperty("userID").asInstanceOf[String] }</li>
-      }
-    } else {
-      <li>No user has shared with you!</li>
-    }
-    val userEntity = datastore.get(KeyFactory.createKey(USER_DETAILS, userID))
-    val sharedWith = if (userEntity.hasProperty("sharedWith")) {
-      val shared = userEntity.getProperty("sharedWith").asInstanceOf[ArrayList[String]]
-      (shared.asScala).map { p =>
-        <li>{ p }</li>
-      }
-    } else {
-      <li>You have not shared with anyone!</li>
-    }
-    <p><h3>Shared From</h3><ul>{ sharedFrom }</ul><h3>Shared With</h3><ul>{ sharedWith }</ul></p>
+    if (usersSharedFrom.nonEmpty) {
+      usersSharedFrom.map(_.getProperty("userID").asInstanceOf[String])
+    } else Nil 
+  }
+
+  def getSharingDetails(userID: String) = {
+    <p>
+      <h3>Shared With</h3>
+      <ul>{ mkXMLUserList(sharedWith(userID)) }</ul>
+      <h3>Shared From</h3>
+      <ul>{ mkXMLUserList(sharedFrom(userID)) }</ul>
+    </p>
   }
 
   def homePage(userId: String) = {
