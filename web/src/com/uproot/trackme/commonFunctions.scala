@@ -191,7 +191,6 @@ class CommonFunctions(req: HttpServletRequest) {
 
     val sessionDetails = xml.XML.load(inputStream)
     val sessionDet = new Session(sessionDetails)
-
     val userKey = KeyFactory.createKey(USER_DETAILS, sessionDet.userID)
     try {
       val userEntity = datastore.get(userKey)

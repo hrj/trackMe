@@ -89,5 +89,6 @@ function MapView() {
 $(window).load(function() {
   OpenLayers.ImgPath = "/static/img/";
   var mapView = new MapView;
+  mapView.updateMap();
   $("#mapUpdate").click(mapView.updateMap);
 });
