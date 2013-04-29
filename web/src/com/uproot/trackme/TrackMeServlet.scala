@@ -30,11 +30,13 @@ class TrackMeServlet extends HttpServlet {
 
     val result = common.requestPath match {
       case Nil => Redirect("/web/home")
-      case "web" :: page :: Nil => {
+      case "web" :: page => {
         common.webAuthentication { userId: String =>
           page match {
-            case "home" => common.homePage(userId)
-            case "settings" => common.settingsPage
+            case "home" :: Nil=> common.homePage(userId)
+            case "settings" :: Nil => common.settingsPage
+            case "getuserlocations" :: userId :: Nil => common.getUserLocations(userId)
+            case "user" :: userId :: Nil => common.viewLocations(userId)
             case _ => common.fileNotFound
           }
         }

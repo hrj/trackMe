@@ -50,18 +50,20 @@ function MapView() {
       sharedMarkers = new OpenLayers.Layer.Markers("Shared Location Markers");
       map.addLayer(sharedMarkers);
       var sharedLocations = obj.sharedLocations;
-      $.each(sharedLocations, function(key, value) {
-        sharedMarkers.addMarker(new OpenLayers.Marker(
-          new OpenLayers.LonLat(
-            toDegree(value.long),
-            toDegree(value.lat)).transform(
-              new OpenLayers.Projection("EPSG:4326"),
-              new OpenLayers.Projection("EPSG:900913")
-            ), 
-            icon.clone()
-          )
-        );
-      });
+      if(sharedLocations){
+        $.each(sharedLocations, function(key, value) {
+          sharedMarkers.addMarker(new OpenLayers.Marker(
+            new OpenLayers.LonLat(
+              toDegree(value.long),
+              toDegree(value.lat)).transform(
+                new OpenLayers.Projection("EPSG:4326"),
+                new OpenLayers.Projection("EPSG:900913")
+              ), 
+              icon.clone()
+            )
+          );
+        });
+      }
 
       var line = new OpenLayers.Geometry.LineString(points).transform(
           new OpenLayers.Projection("EPSG:4326"), 
@@ -80,7 +82,7 @@ function MapView() {
       map.zoomToExtent(myMarkers.getDataExtent() || sharedMarkers.getDataExtent());
     }
     $.ajax({
-      url : "/api/json/retrieve",
+      url : retrieveURL, 
       success : onUpdate
     });
   }
