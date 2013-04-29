@@ -155,7 +155,7 @@ class CommonFunctions(req: HttpServletRequest) {
 
   private def mkXMLUserList(userList: Seq[String]) = {
     if (userList.nonEmpty) {
-      (userList).map(user => <li>{ user }</li>)
+      (userList).map(user => <li><a href={"/web/user/" + user}>{ user }</a></li>)
     } else {
       <li>No Shares!</li>
     }
@@ -280,8 +280,7 @@ class CommonFunctions(req: HttpServletRequest) {
     if (userExists) {
       val url = "var retrieveURL = \"/web/getuserlocations/" + userId + "\""
       XmlContent(createTemplate(
-        xml.Group(Seq(<div id="map" class="bigmap"></div>,
-          getSharingDetails(userId))), Some(url)))
+        <div id="map" class="bigmap"></div> , Some(url)))
     } else {
       Redirect("/web/settings")
     }
