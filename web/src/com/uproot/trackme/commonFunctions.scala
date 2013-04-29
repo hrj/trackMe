@@ -160,9 +160,7 @@ class CommonFunctions(req: HttpServletRequest) {
     val shareFromFilter = new FilterPredicate(SHARED_WITH, FilterOperator.EQUAL, userID)
     val q = new Query(USER_DETAILS).setFilter(shareFromFilter)
     val usersSharedFrom = datastore.prepare(q).asIterable.asScala.toSeq
-    if (usersSharedFrom.nonEmpty) {
-      usersSharedFrom.map(_.getProperty("userID").asInstanceOf[String])
-    } else Nil
+    usersSharedFrom.map(_.getProperty("userID").asInstanceOf[String])
   }
 
   private def getSharingDetails(userID: String) = {
