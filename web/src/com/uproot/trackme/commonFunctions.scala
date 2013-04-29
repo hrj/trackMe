@@ -225,12 +225,12 @@ class CommonFunctions(req: HttpServletRequest) {
   }
 
   private def getLastLocations(userID: String) = {
-    sharedFrom(userID).flatMap { sharer =>
-      val userKey = KeyFactory.createKey(USER_DETAILS, sharer)
+    sharedFrom(userID).flatMap { sharerId =>
+      val userKey = KeyFactory.createKey(USER_DETAILS, sharerId)
       val userQuery = new Query(LOCATIONS).setAncestor(userKey) addSort ("timeStamp", SortDirection.DESCENDING)
       val usersLastLocation = ((datastore.prepare(userQuery)).asList(FetchOptions.Builder.withLimit(1))).asScala.headOption
       usersLastLocation.map { location =>
-        (sharer, LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double]))
+        (sharerId, LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double]))
       }
     }
   }
