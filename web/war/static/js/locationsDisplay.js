@@ -80,7 +80,7 @@ function MapView() {
       map.zoomToExtent(myMarkers.getDataExtent() || sharedMarkers.getDataExtent());
     }
     $.ajax({
-      url : "http://localhost:8888/api/json/retrieve",
+      url : "/api/json/retrieve",
       success : onUpdate
     });
   }

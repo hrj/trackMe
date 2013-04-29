@@ -72,7 +72,7 @@ class CommonFunctions(req: HttpServletRequest) {
           <li><a href="/web/settings">Settings</a></li>
           <li><a href={ userService.createLogoutURL(thisURL) }>Logout</a></li>
         </ul>
-        <p>Wecome! { userID }</p>
+        <p>Welcome! { userID }</p>
         { body }
       </body>
     </html>
