@@ -71,7 +71,7 @@ function MapView() {
       var style = {
         strokeColor : '#0000ff',
         strokeOpacity : 0.5,
-        strokeWidth : 5
+        strokeWidth : 3
       };
 
       var lineFeature = new OpenLayers.Feature.Vector(line, null, style);
