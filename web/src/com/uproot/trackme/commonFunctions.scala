@@ -27,6 +27,7 @@ class CommonFunctions(req: HttpServletRequest) {
   private val USER_DETAILS = "userDetails"
   private val PASS_KEY = "passKey"
   private val LOCATIONS = "locations"
+  private val SHARED_WITH = "sharedWith"
   private val FILE_NOT_FOUND = <p>File Not Found</p>
   private val userService = UserServiceFactory.getUserService
   private val thisURL = req.getRequestURI
@@ -36,13 +37,6 @@ class CommonFunctions(req: HttpServletRequest) {
   val fileNotFound = XmlContent(createTemplate(FILE_NOT_FOUND), 404)
 
   val requestPath = ((req.getPathInfo()).split("/")).filter(_.length != 0).toList
-
-  val test = XmlContent(createTemplate(<form action="/web/test" method="post">
-                                         <label>
-                                           Pass Key :<input type="text" name="passKey" value=""/>
-                                         </label><br/>
-                                         <input type="submit"/>
-                                       </form>))
 
   def userSettingsForm(userId: String, passKey: String, sharedWith: String) =
     <form action="/web/settings" method="post">
@@ -57,7 +51,7 @@ class CommonFunctions(req: HttpServletRequest) {
     </form>
 
   def createTemplate(body: xml.Node) = {
-    val userID = if (req.getUserPrincipal == null) "hello" else req.getUserPrincipal.getName
+    val userID = if (req.getUserPrincipal == null) "Guest" else req.getUserPrincipal.getName
 
     <html>
       <head>
@@ -87,7 +81,7 @@ class CommonFunctions(req: HttpServletRequest) {
     userEntity.setProperty(USER_ID, userID)
     userEntity.setProperty("passKey", passKey)
     if (shareWith.length != 0) {
-      userEntity.setProperty("sharedWith", (shareWith.split(",").toList).asJava)
+      userEntity.setProperty(SHARED_WITH, (shareWith.split(",").toList).asJava)
     }
     datastore.put(userEntity)
     settingsPage
@@ -100,8 +94,8 @@ class CommonFunctions(req: HttpServletRequest) {
         val userKey = KeyFactory.createKey(USER_DETAILS, userId)
         val userEntity = datastore.get(userKey)
         val passKey = userEntity.getProperty("passKey").toString
-        val sharedWith = userEntity.getProperty("sharedWith")
-        val shared = if (userEntity.hasProperty("sharedWith")) {
+        val shared = if (userEntity.hasProperty(SHARED_WITH)) {
+          val sharedWith = userEntity.getProperty(SHARED_WITH)
           sharedWith.asInstanceOf[ArrayList[String]].asScala.mkString(",")
         } else {
           ""
@@ -134,7 +128,7 @@ class CommonFunctions(req: HttpServletRequest) {
     }
   }
 
-  def userExists(userId: String) = {
+  private def userExists(userId: String) = {
     val userKey = KeyFactory.createKey(USER_DETAILS, userId)
     try {
       val userEntity = datastore.get(userKey)
@@ -144,7 +138,7 @@ class CommonFunctions(req: HttpServletRequest) {
     }
   }
 
-  def mkXMLUserList(userList: Seq[String]) = {
+  private def mkXMLUserList(userList: Seq[String]) = {
     if (userList.nonEmpty) {
       (userList).map(user => <li>{ user }</li>)
     } else {
@@ -152,18 +146,18 @@ class CommonFunctions(req: HttpServletRequest) {
     }
   }
 
-  def sharedWith(userID: String) = {
+  private def sharedWith(userID: String) = {
     val userEntity = datastore.get(KeyFactory.createKey(USER_DETAILS, userID))
-    if (userEntity.hasProperty("sharedWith")) {
-      val shared = userEntity.getProperty("sharedWith").asInstanceOf[ArrayList[String]]
+    if (userEntity.hasProperty(SHARED_WITH)) {
+      val shared = userEntity.getProperty(SHARED_WITH).asInstanceOf[ArrayList[String]]
       shared.asScala.toSeq
     } else {
       Nil
     }
   }
 
-  def sharedFrom(userID: String) = {
-    val shareFromFilter = new FilterPredicate("sharedWith", FilterOperator.EQUAL, userID)
+  private def sharedFrom(userID: String) = {
+    val shareFromFilter = new FilterPredicate(SHARED_WITH, FilterOperator.EQUAL, userID)
     val q = new Query(USER_DETAILS).setFilter(shareFromFilter)
     val usersSharedFrom = datastore.prepare(q).asIterable.asScala.toSeq
     if (usersSharedFrom.nonEmpty) {
@@ -171,7 +165,7 @@ class CommonFunctions(req: HttpServletRequest) {
     } else Nil
   }
 
-  def getSharingDetails(userID: String) = {
+  private def getSharingDetails(userID: String) = {
     <p>
       <h3>Shared With</h3>
       <ul>{ mkXMLUserList(sharedWith(userID)) }</ul>
@@ -226,13 +220,13 @@ class CommonFunctions(req: HttpServletRequest) {
 
   private def quote(value: String) = "\"" + value + "\""
 
-  def sharedLocationsMkJson(sharedLocations: Seq[(String, LatLong)]) = {
+  private def sharedLocationsMkJson(sharedLocations: Seq[(String, LatLong)]) = {
     "\"sharedLocations\":" + sharedLocations.map { user =>
       quote(user._1) + ":" + user._2.mkJSON
     }.mkString("{", ",", "}")
   }
 
-  def getLastLocations(userID: String) = {
+  private def getLastLocations(userID: String) = {
     sharedFrom(userID).flatMap { sharer =>
       val userKey = KeyFactory.createKey(USER_DETAILS, sharer)
       val userQuery = new Query(LOCATIONS).setAncestor(userKey) addSort ("timeStamp", SortDirection.DESCENDING)
