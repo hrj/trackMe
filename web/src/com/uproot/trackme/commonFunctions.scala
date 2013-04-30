@@ -18,6 +18,7 @@ import com.google.appengine.api.users.UserServiceFactory
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo
+import com.google.appengine.api.datastore.EntityNotFoundException
 
 class CommonFunctions(req: HttpServletRequest) {
 
@@ -26,6 +27,7 @@ class CommonFunctions(req: HttpServletRequest) {
   private val PASS_KEY = "passKey"
   private val LOCATIONS = "locations"
   private val SHARED_WITH = "sharedWith"
+  private val VERSION_NO = "versionNo"
   private val FILE_NOT_FOUND = <p>File Not Found</p>
   private val GRACE_PERIOD = 3600000
   private val userService = UserServiceFactory.getUserService
@@ -35,12 +37,12 @@ class CommonFunctions(req: HttpServletRequest) {
   private val currUserId = if (userPrincipal != null) userPrincipal.getName else null
   private val userExists = {
     if (currUserId != null) {
-      val userKey = KeyFactory.createKey(USER_DETAILS, currUserId)
       try {
+        val userKey = KeyFactory.createKey(USER_DETAILS, currUserId)
         datastore.get(userKey)
         true
       } catch {
-        case _ => false
+        case _: IllegalArgumentException | _: EntityNotFoundException => false
       }
     } else {
       false
@@ -48,12 +50,12 @@ class CommonFunctions(req: HttpServletRequest) {
   }
 
   private def userExistsFunc(userId: String) = {
-    val userKey = KeyFactory.createKey(USER_DETAILS, userId)
     try {
+      val userKey = KeyFactory.createKey(USER_DETAILS, userId)
       datastore.get(userKey)
       true
     } catch {
-      case _ => false
+      case _: IllegalArgumentException | _: EntityNotFoundException => false
     }
   }
 
@@ -61,13 +63,14 @@ class CommonFunctions(req: HttpServletRequest) {
 
   val requestPath = ((req.getPathInfo()).split("/")).filter(_.length != 0).toList
 
-  private def userSettingsForm(passKey: String, sharedWith: String, message: Option[String]) =
+  private def userSettingsForm(passKey: String, sharedWith: String, message: Option[String], versionNo: Long) =
     <form action="/web/settings" method="post">
       {
         message.map { message =>
           <br/><b>{ xml.Unparsed(message) }</b><br/>
         }.getOrElse(xml.Null)
       }
+      <input type="hidden" name="versionNo" value={ versionNo.toString }/>
       <label>UserId : { currUserId }</label><br/>
       <label>
         Pass Key :<input type="text" name="passKey" value={ passKey }/>
@@ -105,24 +108,36 @@ class CommonFunctions(req: HttpServletRequest) {
   }
 
   def updateSettings() = {
-    val userKey = KeyFactory.createKey(USER_DETAILS, currUserId)
+    val updateVersionNo = req.getParameter("versionNo").toLong
     val passKey = req.getParameter("passKey")
     val shareWith = req.getParameter("shareWith")
-    val userEntity = new Entity(userKey)
     val usersSharingWith = shareWith.split(",").toList
     val (validUsers, invalidUsers) = usersSharingWith.partition(userExistsFunc(_))
-    userEntity.setProperty(USER_ID, currUserId)
-    userEntity.setProperty("passKey", passKey)
-    if (validUsers.nonEmpty) {
-      userEntity.setProperty(SHARED_WITH, (validUsers).asJava)
+    val userKey = KeyFactory.createKey(USER_DETAILS, currUserId)
+    val (userEntity, serverVersionNo) = if (userExists) {
+      val userEntity = datastore.get(userKey)
+      (userEntity, userEntity.getProperty("versionNo").asInstanceOf[Long])
+    } else {
+      (new Entity(userKey), 0.toLong)
     }
-    datastore.put(userEntity)
-    val message = "Settings Updated Successfully!" + {
-      if (invalidUsers.nonEmpty) {
-        " Failed to share with the folling Users as they are not registered Users: " + invalidUsers.mkString(" , ")
+    val message = if (serverVersionNo == updateVersionNo) {
+      userEntity.setProperty(VERSION_NO, serverVersionNo + 1.toLong)
+      userEntity.setProperty(PASS_KEY, passKey)
+      if (validUsers.nonEmpty) {
+        userEntity.setProperty(SHARED_WITH, (validUsers).asJava)
       } else {
-        ""
+        userEntity.removeProperty(SHARED_WITH)
       }
+      datastore.put(userEntity)
+      "Settings Updated Successfully!" + {
+        if (invalidUsers.nonEmpty) {
+          " Failed to share with the folling Users as they are not registered Users: " + invalidUsers.mkString(" , ")
+        } else {
+          ""
+        }
+      }
+    } else {
+      "Update Failed! Attempt to update outdated information."
     }
     settingsPage(Some(message))
   }
@@ -133,15 +148,16 @@ class CommonFunctions(req: HttpServletRequest) {
         val userKey = KeyFactory.createKey(USER_DETAILS, currUserId)
         val userEntity = datastore.get(userKey)
         val passKey = userEntity.getProperty(PASS_KEY).toString
+        val versionNo = userEntity.getProperty(VERSION_NO).asInstanceOf[Long]
         val shared = if (userEntity.hasProperty(SHARED_WITH)) {
           val sharedWith = userEntity.getProperty(SHARED_WITH)
           sharedWith.asInstanceOf[ArrayList[String]].asScala.mkString(",")
         } else {
           ""
         }
-        userSettingsForm(passKey, shared, message)
+        userSettingsForm(passKey, shared, message, versionNo)
       } else {
-        (userSettingsForm("", "", Some("Please Set your PassKey")))
+        (userSettingsForm("", "", Some("Please Set your PassKey"), 1))
       }
     XmlContent(createTemplate(settingsForm))
   }
@@ -227,11 +243,11 @@ class CommonFunctions(req: HttpServletRequest) {
 
     val sessionDetails = xml.XML.load(inputStream)
     val sessionDet = new Session(sessionDetails)
-    val userKey = KeyFactory.createKey(USER_DETAILS, sessionDet.userID)
     val locations = sessionDet.locationDetails
     val maxTime = System.currentTimeMillis + GRACE_PERIOD
     if (locations.forall(_.isValid(maxTime))) {
       try {
+        val userKey = KeyFactory.createKey(USER_DETAILS, sessionDet.userID)
         val userEntity = datastore.get(userKey)
         val dsUserID = userEntity.getProperty("userID")
         val dsPassKey = userEntity.getProperty("passKey")
@@ -250,7 +266,7 @@ class CommonFunctions(req: HttpServletRequest) {
           XmlContent(ResponseStatus(false, "Wrong UserID or PassKey").mkXML)
         }
       } catch {
-        case _ => XmlContent(ResponseStatus(false, "User Does not Exist").mkXML)
+        case _: IllegalArgumentException | _: EntityNotFoundException => XmlContent(ResponseStatus(false, "User Does not Exist").mkXML)
       }
     } else {
       XmlContent(ResponseStatus(false, "Invalid Locations").mkXML)
