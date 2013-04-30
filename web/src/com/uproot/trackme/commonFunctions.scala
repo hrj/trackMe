@@ -153,11 +153,18 @@ class CommonFunctions(req: HttpServletRequest) {
     }
   }
 
-  private def mkXMLUserList(userList: Seq[String]) = {
-    if (userList.nonEmpty) {
-      (userList).map(user => <li><a href={ "/web/user/" + user }>{ user }</a></li>)
+  private def mkXmlLinkList(listElements: Seq[String], message: Option[String] = None) = {
+    if (listElements.nonEmpty) {
+      listElements.map(element => <li><a href={ "/web/user/" + element }>{ element }</a></li>)
     } else {
-      <li>No Shares!</li>
+      message.map(message => <li>{ message }</li>).getOrElse(xml.Null)
+    }
+  }
+  private def mkXmlList(listElements: Seq[String], message: Option[String] = None) = {
+    if (listElements.nonEmpty) {
+      (listElements).map(element => <li>{ element }</li>)
+    } else {
+      message.map(message => <li>{ message }</li>).getOrElse(xml.Null)
     }
   }
 
@@ -181,9 +188,9 @@ class CommonFunctions(req: HttpServletRequest) {
   private def getSharingDetails(userId: String) = {
     <p>
       <h3>Shared With</h3>
-      <ul>{ mkXMLUserList(sharedWith(userId)) }</ul>
+      <ul>{ mkXmlList(sharedWith(userId), Some("No Shares!")) }</ul>
       <h3>Shared From</h3>
-      <ul>{ mkXMLUserList(sharedFrom(userId)) }</ul>
+      <ul>{ mkXmlLinkList(sharedFrom(userId), Some("No Shares!")) }</ul>
     </p>
   }
 
@@ -284,7 +291,7 @@ class CommonFunctions(req: HttpServletRequest) {
           xml.Group(Seq(<div id="map" class="bigmap"></div>,
             <p>
               <h3>Shared From</h3>
-              <ul>{ mkXMLUserList(sharedFrom(currUserId)) }</ul>
+              <ul>{ mkXmlLinkList(sharedFrom(currUserId), Some("No Shares!")) }</ul>
             </p>)), Some(url)))
       } else {
         XmlContent(createTemplate(<b>The user does not share his locations with you!</b>))
