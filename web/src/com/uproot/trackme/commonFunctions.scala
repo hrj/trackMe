@@ -1,25 +1,25 @@
 package com.uproot.trackme
 
-import java.security.Principal
 import java.util.ArrayList
 import java.util.zip.GZIPInputStream
-import scala.collection.JavaConverters._
-import com.google.appengine.api.datastore.DatastoreService
+
+import scala.Option.option2Iterable
+import scala.collection.JavaConverters.asScalaBufferConverter
+import scala.collection.JavaConverters.iterableAsScalaIterableConverter
+import scala.collection.JavaConverters.seqAsJavaListConverter
+
 import com.google.appengine.api.datastore.DatastoreServiceFactory
 import com.google.appengine.api.datastore.Entity
-import com.google.appengine.api.datastore.Key
+import com.google.appengine.api.datastore.FetchOptions
 import com.google.appengine.api.datastore.KeyFactory
 import com.google.appengine.api.datastore.Query
 import com.google.appengine.api.datastore.Query.FilterOperator
 import com.google.appengine.api.datastore.Query.FilterPredicate
-import com.google.appengine.api.users.UserService
+import com.google.appengine.api.datastore.Query.SortDirection
 import com.google.appengine.api.users.UserServiceFactory
+
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-import com.google.appengine.api.datastore.Query.CompositeFilterOperator
-import com.google.appengine.api.datastore.EntityNotFoundException
-import com.google.appengine.api.datastore.Query.SortDirection
-import com.google.appengine.api.datastore.FetchOptions
 
 class CommonFunctions(req: HttpServletRequest) {
 
@@ -38,7 +38,7 @@ class CommonFunctions(req: HttpServletRequest) {
     if (currUserId != null) {
       val userKey = KeyFactory.createKey(USER_DETAILS, currUserId)
       try {
-        val userEntity = datastore.get(userKey)
+        datastore.get(userKey)
         true
       } catch {
         case _ => false
@@ -51,7 +51,7 @@ class CommonFunctions(req: HttpServletRequest) {
   private def userExistsFunc(userId: String) = {
     val userKey = KeyFactory.createKey(USER_DETAILS, userId)
     try {
-      val userEntity = datastore.get(userKey)
+      datastore.get(userKey)
       true
     } catch {
       case _ => false
@@ -64,7 +64,7 @@ class CommonFunctions(req: HttpServletRequest) {
 
   private def userSettingsForm(userId: String, passKey: String, sharedWith: String) =
     <form action="/web/settings" method="post">
-      <label>UserId : { userId }</label>
+      <label>UserId : { userId }</label><br/>
       <label>
         Pass Key :<input type="text" name="passKey" value={ passKey }/>
       </label><br/>
@@ -155,7 +155,7 @@ class CommonFunctions(req: HttpServletRequest) {
 
   private def mkXMLUserList(userList: Seq[String]) = {
     if (userList.nonEmpty) {
-      (userList).map(user => <li><a href={"/web/user/" + user}>{ user }</a></li>)
+      (userList).map(user => <li><a href={ "/web/user/" + user }>{ user }</a></li>)
     } else {
       <li>No Shares!</li>
     }
@@ -278,9 +278,17 @@ class CommonFunctions(req: HttpServletRequest) {
 
   def viewLocations(userId: String) = {
     if (userExists) {
-      val url = "var retrieveURL = \"/web/getuserlocations/" + userId + "\""
-      XmlContent(createTemplate(
-        <div id="map" class="bigmap"></div> , Some(url)))
+      if (sharedFrom(currUserId).contains(userId) || userId == currUserId) {
+        val url = "var retrieveURL = \"/web/getuserlocations/" + userId + "\""
+        XmlContent(createTemplate(
+          xml.Group(Seq(<div id="map" class="bigmap"></div>,
+            <p>
+              <h3>Shared From</h3>
+              <ul>{ mkXMLUserList(sharedFrom(currUserId)) }</ul>
+            </p>)), Some(url)))
+      } else {
+        XmlContent(createTemplate(<b>The user does not share his locations with you!</b>))
+      }
     } else {
       Redirect("/web/settings")
     }
