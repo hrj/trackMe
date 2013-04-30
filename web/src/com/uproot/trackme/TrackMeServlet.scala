@@ -34,7 +34,7 @@ class TrackMeServlet extends HttpServlet {
         common.webAuthentication { userId: String =>
           page match {
             case "home" :: Nil=> common.homePage(userId)
-            case "settings" :: Nil => common.settingsPage
+            case "settings" :: Nil => common.settingsPage()
             case "getuserlocations" :: userId :: Nil => common.getUserLocations(userId)
             case "user" :: userId :: Nil => common.viewLocations(userId)
             case _ => common.fileNotFound

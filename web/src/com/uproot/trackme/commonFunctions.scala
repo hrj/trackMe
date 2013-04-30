@@ -2,12 +2,10 @@ package com.uproot.trackme
 
 import java.util.ArrayList
 import java.util.zip.GZIPInputStream
-
 import scala.Option.option2Iterable
 import scala.collection.JavaConverters.asScalaBufferConverter
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 import scala.collection.JavaConverters.seqAsJavaListConverter
-
 import com.google.appengine.api.datastore.DatastoreServiceFactory
 import com.google.appengine.api.datastore.Entity
 import com.google.appengine.api.datastore.FetchOptions
@@ -17,9 +15,9 @@ import com.google.appengine.api.datastore.Query.FilterOperator
 import com.google.appengine.api.datastore.Query.FilterPredicate
 import com.google.appengine.api.datastore.Query.SortDirection
 import com.google.appengine.api.users.UserServiceFactory
-
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo
 
 class CommonFunctions(req: HttpServletRequest) {
 
@@ -29,6 +27,7 @@ class CommonFunctions(req: HttpServletRequest) {
   private val LOCATIONS = "locations"
   private val SHARED_WITH = "sharedWith"
   private val FILE_NOT_FOUND = <p>File Not Found</p>
+  private val GRACE_PERIOD = 3600000
   private val userService = UserServiceFactory.getUserService
   private val thisURL = req.getRequestURI
   private val userPrincipal = req.getUserPrincipal
@@ -62,9 +61,14 @@ class CommonFunctions(req: HttpServletRequest) {
 
   val requestPath = ((req.getPathInfo()).split("/")).filter(_.length != 0).toList
 
-  private def userSettingsForm(userId: String, passKey: String, sharedWith: String) =
+  private def userSettingsForm(passKey: String, sharedWith: String, message: Option[String]) =
     <form action="/web/settings" method="post">
-      <label>UserId : { userId }</label><br/>
+      {
+        message.map { message =>
+          <br/><b>{ xml.Unparsed(message) }</b><br/>
+        }.getOrElse(xml.Null)
+      }
+      <label>UserId : { currUserId }</label><br/>
       <label>
         Pass Key :<input type="text" name="passKey" value={ passKey }/>
       </label><br/>
@@ -105,16 +109,25 @@ class CommonFunctions(req: HttpServletRequest) {
     val passKey = req.getParameter("passKey")
     val shareWith = req.getParameter("shareWith")
     val userEntity = new Entity(userKey)
+    val usersSharingWith = shareWith.split(",").toList
+    val (validUsers, invalidUsers) = usersSharingWith.partition(userExistsFunc(_))
     userEntity.setProperty(USER_ID, currUserId)
     userEntity.setProperty("passKey", passKey)
-    if (shareWith.length != 0) {
-      userEntity.setProperty(SHARED_WITH, (shareWith.split(",").toList).asJava)
+    if (validUsers.nonEmpty) {
+      userEntity.setProperty(SHARED_WITH, (validUsers).asJava)
     }
     datastore.put(userEntity)
-    settingsPage
+    val message = "Settings Updated Successfully!" + {
+      if (invalidUsers.nonEmpty) {
+        " Failed to share with the folling Users as they are not registered Users: " + invalidUsers.mkString(" , ")
+      } else {
+        ""
+      }
+    }
+    settingsPage(Some(message))
   }
 
-  def settingsPage() = {
+  def settingsPage(message: Option[String] = None) = {
     val settingsForm =
       if (userExists) {
         val userKey = KeyFactory.createKey(USER_DETAILS, currUserId)
@@ -126,9 +139,9 @@ class CommonFunctions(req: HttpServletRequest) {
         } else {
           ""
         }
-        userSettingsForm(currUserId, passKey, shared)
+        userSettingsForm(passKey, shared, message)
       } else {
-        (userSettingsForm(currUserId, "", ""))
+        (userSettingsForm("", "", Some("Please Set your PassKey")))
       }
     XmlContent(createTemplate(settingsForm))
   }
@@ -160,6 +173,7 @@ class CommonFunctions(req: HttpServletRequest) {
       message.map(message => <li>{ message }</li>).getOrElse(xml.Null)
     }
   }
+
   private def mkXmlList(listElements: Seq[String], message: Option[String] = None) = {
     if (listElements.nonEmpty) {
       (listElements).map(element => <li>{ element }</li>)
@@ -214,26 +228,32 @@ class CommonFunctions(req: HttpServletRequest) {
     val sessionDetails = xml.XML.load(inputStream)
     val sessionDet = new Session(sessionDetails)
     val userKey = KeyFactory.createKey(USER_DETAILS, sessionDet.userID)
-    try {
-      val userEntity = datastore.get(userKey)
-      val dsUserID = userEntity.getProperty("userID")
-      val dsPassKey = userEntity.getProperty("passKey")
-      if (dsUserID == sessionDet.userID && dsPassKey == sessionDet.passKey) {
-        val locationEntities: List[Entity] = sessionDet.locationDetails.map { loc =>
-          val userLocations = new Entity(LOCATIONS, userKey)
-          userLocations.setProperty("latitude", loc.latLong.latitude)
-          userLocations.setProperty("longitude", loc.latLong.longitude)
-          userLocations.setProperty("accuracy", loc.accuracy)
-          userLocations.setProperty("timeStamp", loc.timeStamp)
-          userLocations
+    val locations = sessionDet.locationDetails
+    val maxTime = System.currentTimeMillis + GRACE_PERIOD
+    if (locations.forall(_.isValid(maxTime))) {
+      try {
+        val userEntity = datastore.get(userKey)
+        val dsUserID = userEntity.getProperty("userID")
+        val dsPassKey = userEntity.getProperty("passKey")
+        if (dsUserID == sessionDet.userID && dsPassKey == sessionDet.passKey) {
+          val locationEntities: List[Entity] = sessionDet.locationDetails.map { loc =>
+            val userLocations = new Entity(LOCATIONS, userKey)
+            userLocations.setProperty("latitude", loc.latLong.latitude)
+            userLocations.setProperty("longitude", loc.latLong.longitude)
+            userLocations.setProperty("accuracy", loc.accuracy)
+            userLocations.setProperty("timeStamp", loc.timeStamp)
+            userLocations
+          }
+          datastore.put(locationEntities.asJava)
+          XmlContent(ResponseStatus(true, "Location added successfuly").mkXML)
+        } else {
+          XmlContent(ResponseStatus(false, "Wrong UserID or PassKey").mkXML)
         }
-        datastore.put(locationEntities.asJava)
-        XmlContent(ResponseStatus(true, "Location added successfuly").mkXML)
-      } else {
-        XmlContent(ResponseStatus(false, "Wrong UserID or PassKey").mkXML)
+      } catch {
+        case _ => XmlContent(ResponseStatus(false, "User Does not Exist").mkXML)
       }
-    } catch {
-      case _ => XmlContent(ResponseStatus(false, "User Does not Exist").mkXML)
+    } else {
+      XmlContent(ResponseStatus(false, "Invalid Locations").mkXML)
     }
   }
 
@@ -297,7 +317,7 @@ class CommonFunctions(req: HttpServletRequest) {
         XmlContent(createTemplate(<b>The user does not share his locations with you!</b>))
       }
     } else {
-      Redirect("/web/settings")
+      Redirect("/web/home")
     }
 
   }
