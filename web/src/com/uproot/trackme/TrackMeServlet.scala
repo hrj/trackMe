@@ -24,6 +24,20 @@ import collection.JavaConverters._
 
 class TrackMeServlet extends HttpServlet {
 
+  private def sendResponse(result: Result, resp: HttpServletResponse) {
+    result match {
+      case c: Content => {
+        resp.setStatus(c.responseCode)
+        resp.setContentType(c.contentType)
+        resp.getWriter.write(c.content)
+        resp.flushBuffer
+      }
+      case Redirect(url) => {
+        resp.sendRedirect(url.toString)
+      }
+    }
+  }
+
   override def doGet(req: HttpServletRequest, resp: HttpServletResponse) {
 
     val common = new CommonFunctions(req)
@@ -35,16 +49,16 @@ class TrackMeServlet extends HttpServlet {
           page match {
             case "home" :: Nil=> loggedIn.homePage()
             case "settings" :: Nil => loggedIn.settingsPage()
-            case "getuserlocations" :: userId :: Nil => common.getUserLocations(userId)
-            case "user" :: userId :: Nil => common.viewLocations(userId)
+            case "getuserlocations" :: userId :: Nil => loggedIn.getUserLocations(userId)
+            case "user" :: userId :: Nil => loggedIn.viewLocations(userId)
             case _ => common.fileNotFound
           }
         }
       }
       case "api" :: format :: operation :: Nil => {
-        common.apiAuthentication(format, {
+        common.apiAuthentication(format, { loggedIn =>
           operation match {
-            case "retrieve" => common.retrieveLocations
+            case "retrieve" => loggedIn.retrieveLocations
             case _ => common.fileNotFound
           }
         })
@@ -52,7 +66,7 @@ class TrackMeServlet extends HttpServlet {
       case _ => common.fileNotFound
     }
 
-    common.sendResponse(result, resp)
+    sendResponse(result, resp)
   }
 
   override def doPost(req: HttpServletRequest, resp: HttpServletResponse) = {
@@ -69,9 +83,9 @@ class TrackMeServlet extends HttpServlet {
         }
       }
       case "api" :: format :: operation :: Nil => {
-        common.apiAuthentication(format, {
+        common.apiAuthentication(format, { loggedIn =>
           operation match {
-            case "store" => common.storeLocations
+            case "store" => loggedIn.storeLocations
             case _ => common.fileNotFound
           }
         })
@@ -79,6 +93,6 @@ class TrackMeServlet extends HttpServlet {
       case _ => common.fileNotFound
     }
 
-    common.sendResponse(result, resp)
+    sendResponse(result, resp)
   }
 }

@@ -27,24 +27,24 @@ function MapView() {
       map.addLayer(lineLayer);
       var points = new Array();
       var obj = serverLocations;
-      var i = 0;
-      while (i < Number(obj.locations.length)) {
-        var myPoints = new OpenLayers.Geometry.Point(
-            toDegree(obj.locations[i].long),
-            toDegree(obj.locations[i].lat)
-        );
-        points.push(myPoints);
-        myMarkers.addMarker(new OpenLayers.Marker(
-          new OpenLayers.LonLat(
-            toDegree(obj.locations[i].long), 
-            toDegree(obj.locations[i].lat)).transform(
-              new OpenLayers.Projection("EPSG:4326"), 
-              new OpenLayers.Projection("EPSG:900913")
-            ),
-            icon.clone()
-          )
-        );
-        i++;
+      if(obj.locations) {
+        $.each(obj.locations, function(i) {
+          var myPoints = new OpenLayers.Geometry.Point(
+              toDegree(obj.locations[i].long),
+              toDegree(obj.locations[i].lat)
+          );
+          points.push(myPoints);
+          myMarkers.addMarker(new OpenLayers.Marker(
+            new OpenLayers.LonLat(
+              toDegree(obj.locations[i].long), 
+              toDegree(obj.locations[i].lat)).transform(
+                new OpenLayers.Projection("EPSG:4326"), 
+                new OpenLayers.Projection("EPSG:900913")
+              ),
+              icon.clone()
+            )
+          );
+        });
       }
 
       sharedMarkers = new OpenLayers.Layer.Markers("Shared Location Markers");
