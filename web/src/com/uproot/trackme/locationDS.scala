@@ -28,7 +28,7 @@ case class Location(latLong: LatLong, accuracy: Int, timeStamp: Long) {
   }
 }
 
-case class Session(id: String, userID: String, passKey: String, locationDetails: List[Location]) {
+case class Session(id: String, userId: String, passKey: String, locationDetails: List[Location]) {
   def this(node: scala.xml.Elem) = this(node.attr("id"), node.attr("userid"), node.attr("passkey"),
     (node \ "location").toList.map(new Location(_)))
 }
