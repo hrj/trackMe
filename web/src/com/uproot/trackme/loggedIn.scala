@@ -2,12 +2,10 @@ package com.uproot.trackme;
 
 import java.util.ArrayList
 import java.util.zip.GZIPInputStream
-
 import scala.Option.option2Iterable
 import scala.collection.JavaConverters.asScalaBufferConverter
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 import scala.collection.JavaConverters.seqAsJavaListConverter
-
 import com.google.appengine.api.datastore.Entity
 import com.google.appengine.api.datastore.FetchOptions
 import com.google.appengine.api.datastore.KeyFactory
@@ -16,7 +14,6 @@ import com.google.appengine.api.datastore.Query.FilterOperator
 import com.google.appengine.api.datastore.Query.FilterPredicate
 import com.google.appengine.api.datastore.Query.SortDirection
 import com.google.appengine.api.users.UserServiceFactory
-
 import Helper.GRACE_PERIOD
 import Helper.LOCATIONS
 import Helper.PASS_KEY
@@ -29,6 +26,7 @@ import Helper.getUserEntity
 import Helper.mkUserKey
 import Helper.userExistsFunc
 import javax.servlet.http.HttpServletRequest
+import java.util.ConcurrentModificationException
 
 class LoggedIn(currUserId: String, req: HttpServletRequest) {
 
@@ -42,6 +40,29 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
     Helper.createTemplate(currUserId, message, jScript, logoutURL = logoutURL)
   }
 
+  private def mkTxn[T](f: => T)(implicit m: Manifest[T]) = {
+    var retry = 10000
+    var result: Option[T] = None
+    while (retry > 0) {
+      val tx = datastore.beginTransaction
+      try {
+        result = Some(f)
+        tx.commit
+      } catch {
+        case e: ConcurrentModificationException =>
+          retry -= 1
+      } finally {
+        if (tx.isActive) {
+          tx.rollback
+          println("rollBack")
+        } else {
+          retry = 0
+        }
+      }
+    }
+    result.get
+  }
+
   def updateSettings() = {
     val updateVersionNo = req.getParameter("versionNo").toLong
     val passKey = req.getParameter("passKey")
@@ -49,32 +70,34 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
     val usersSharingWith = shareWith.split(",").toList
     val (validUsers, invalidUsers) = usersSharingWith.partition(userExistsFunc(_))
     val userKey = mkUserKey(currUserId)
-    val (userEntity, serverVersionNo) = if (userExists) {
-      val userEntity = getUserEntity(currUserId)
-      (userEntity, userEntity.getProperty("versionNo").asInstanceOf[Long])
-    } else {
-      (new Entity(userKey), 0.toLong)
-    }
-    val message = if (serverVersionNo == updateVersionNo) {
-      userEntity.setProperty(VERSION_NO, serverVersionNo + 1.toLong)
-      userEntity.setProperty(PASS_KEY, passKey)
-      if (validUsers.nonEmpty) {
-        userEntity.setProperty(SHARED_WITH, (validUsers).asJava)
+    mkTxn {
+      val (userEntity, serverVersionNo) = if (userExists) {
+        val userEntity = getUserEntity(currUserId)
+        (userEntity, userEntity.getProperty("versionNo").asInstanceOf[Long])
       } else {
-        userEntity.removeProperty(SHARED_WITH)
+        (new Entity(userKey), 0.toLong)
       }
-      datastore.put(userEntity)
-      "Settings Updated Successfully!" + {
-        if (invalidUsers.nonEmpty) {
-          " Failed to share with the folling Users as they are not registered Users: " + invalidUsers.mkString(" , ")
+      val message = if (serverVersionNo == updateVersionNo) {
+        userEntity.setProperty(VERSION_NO, serverVersionNo + 1.toLong)
+        userEntity.setProperty(PASS_KEY, passKey)
+        if (validUsers.nonEmpty) {
+          userEntity.setProperty(SHARED_WITH, (validUsers).asJava)
         } else {
-          ""
+          userEntity.removeProperty(SHARED_WITH)
         }
+        datastore.put(userEntity)
+        "Settings Updated Successfully!" + {
+          if (invalidUsers.nonEmpty) {
+            " Failed to share with the folling Users as they are not registered Users: " + invalidUsers.mkString(" , ")
+          } else {
+            ""
+          }
+        }
+      } else {
+        "Update Failed! Attempt to update outdated information."
       }
-    } else {
-      "Update Failed! Attempt to update outdated information."
+      settingsPage(Some(message))
     }
-    settingsPage(Some(message))
   }
 
   private def userSettingsForm(passKey: String, sharedWith: String, message: Option[String], versionNo: Long) =
