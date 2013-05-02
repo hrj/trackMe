@@ -4,12 +4,9 @@
  * http://blueprintcss.googlecode.com
  */
 .smallmap {
-    width: 512px;
-    height: 256px;
     border: 1px solid #ccc;
 }
 .bigmap {
-    width: 720px;
     height: 512px;
     border: 1px solid #ccc;
 }
