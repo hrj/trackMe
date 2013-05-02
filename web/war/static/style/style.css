@@ -3,9 +3,6 @@
  * From Blueprint reset.css
  * http://blueprintcss.googlecode.com
  */
-.smallmap {
-    border: 1px solid #ccc;
-}
 .bigmap {
     height: 512px;
     border: 1px solid #ccc;
