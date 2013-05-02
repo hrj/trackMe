@@ -92,6 +92,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
         (new Entity(userKey), 0L)
       }
       if (serverVersionNo == updateVersionNo) {
+        userEntity.setProperty(USER_ID, currUserId)
         userEntity.setProperty(VERSION_NO, serverVersionNo + 1L)
         userEntity.setProperty(PASS_KEY, passKey)
         if (validUsers.nonEmpty) {

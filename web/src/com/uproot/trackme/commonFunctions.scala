@@ -45,7 +45,7 @@ class CommonFunctions(req: HttpServletRequest) {
   private val logoutURL = userService.createLogoutURL(thisURL)
 
   private def createTemplate(message: xml.Node, jScript: Option[String] = None) = {
-    Helper.createTemplate(<p></p>, "Guest!", message, jScript, logoutURL = logoutURL)
+    Helper.createTemplate(<p></p>, " Guest!", message, jScript, logoutURL = logoutURL)
   }
   val fileNotFound = XmlContent(createTemplate(FILE_NOT_FOUND), 404)
 
