@@ -19,6 +19,22 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo
 import com.google.appengine.api.datastore.EntityNotFoundException
+case class MenuEntry(title: String, icon: String, url: String)
+class Menu(entries: Seq[MenuEntry]) {
+
+  def createMenu(activeTitle: String) = {
+    <ul class="nav nav-list">{
+      entries.map {
+        entry =>
+          if (entry.title equals activeTitle) {
+            <li class="active">
+              <a href={ entry.url }><i class={ entry.icon }></i>{ entry.title }</a>
+            </li>
+          } else { <li><a href={ entry.url }><i class={ entry.icon }></i>{ entry.title }</a></li> }
+      }
+    }</ul>
+  }
+}
 
 class CommonFunctions(req: HttpServletRequest) {
   import Helper._
@@ -29,7 +45,7 @@ class CommonFunctions(req: HttpServletRequest) {
   private val logoutURL = userService.createLogoutURL(thisURL)
 
   private def createTemplate(message: xml.Node, jScript: Option[String] = None) = {
-    Helper.createTemplate("Guest!", message, jScript, logoutURL = logoutURL)
+    Helper.createTemplate(<p></p>, " Guest!", message, jScript, logoutURL = logoutURL)
   }
   val fileNotFound = XmlContent(createTemplate(FILE_NOT_FOUND), 404)
 
@@ -81,7 +97,6 @@ class CommonFunctions(req: HttpServletRequest) {
     }
   }
 
-
 }
 object Helper {
 
@@ -113,11 +128,13 @@ object Helper {
     KeyFactory.createKey(USER_DETAILS, userId)
   }
 
-  def createTemplate(userName: String, body: xml.Node, jScript: Option[String] = None, logoutURL: String) = {
-    <html>
+  def createTemplate(menu: xml.Node, userName: String, body: xml.Node, jScript: Option[String] = None, logoutURL: String) = {
+    <html lang="en">
       <head>
         <script src="/static/js/jquery-1.9.1.min.js"></script>
+        <script src="/static/js/bootstrap.min.js"></script>
         <link rel="stylesheet" href="/static/style/style.css" type="text/css"></link>
+        <link href="/static/style/bootstrap.min.css" rel="stylesheet" media="screen"></link>
         {
           jScript.map { script =>
             <script>{ xml.Unparsed(script) }</script>
@@ -127,13 +144,16 @@ object Helper {
         <script src="/static/js/locationsDisplay.js"></script>
       </head>
       <body>
-        <ul>
-          <li><a href="/web/home">Home</a></li>
-          <li><a href="/web/settings">Settings</a></li>
-          <li><a href={ logoutURL }>Logout</a></li>
-        </ul>
-        <p>Welcome! { userName }</p>
-        { body }
+        <div class="container-fluid">
+          <div class="row-fluid">
+            <div class="span2">
+              <h3>TrackMe</h3>
+              <i class="icon-user"></i>{ userName }
+              { menu }
+            </div>
+            { body }
+          </div>
+        </div>
       </body>
     </html>
   }
