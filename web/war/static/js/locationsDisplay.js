@@ -1,6 +1,16 @@
 function toDegree(radian) {
   return (radian * 180) / Math.PI;
 }
+function createMarker(long, lat, icon) {
+  return new OpenLayers.Marker(
+    new OpenLayers.LonLat(long,
+      lat).transform(
+        new OpenLayers.Projection("EPSG:4326"),
+        new OpenLayers.Projection("EPSG:900913")
+      ),
+      icon.clone()
+  );
+}
 
 function MapView() {
   var map = new OpenLayers.Map('map');
@@ -34,16 +44,11 @@ function MapView() {
               toDegree(obj.locations[i].lat)
           );
           points.push(myPoints);
-          myMarkers.addMarker(new OpenLayers.Marker(
-            new OpenLayers.LonLat(
-              toDegree(obj.locations[i].long), 
-              toDegree(obj.locations[i].lat)).transform(
-                new OpenLayers.Projection("EPSG:4326"), 
-                new OpenLayers.Projection("EPSG:900913")
-              ),
-              icon.clone()
-            )
-          );
+          myMarkers.addMarker(createMarker(
+            toDegree(obj.locations[i].long),
+            toDegree(obj.locations[i].lat),
+            icon
+          ));
         });
       }
 
@@ -52,21 +57,16 @@ function MapView() {
       var sharedLocations = obj.sharedLocations;
       if(sharedLocations){
         $.each(sharedLocations, function(key, value) {
-          sharedMarkers.addMarker(new OpenLayers.Marker(
-            new OpenLayers.LonLat(
-              toDegree(value.long),
-              toDegree(value.lat)).transform(
-                new OpenLayers.Projection("EPSG:4326"),
-                new OpenLayers.Projection("EPSG:900913")
-              ), 
-              icon.clone()
-            )
-          );
+          sharedMarkers.addMarker(createMarker(
+            toDegree(value.long),
+            toDegree(value.lat),
+            icon
+          ));
         });
       }
 
       var line = new OpenLayers.Geometry.LineString(points).transform(
-          new OpenLayers.Projection("EPSG:4326"), 
+          new OpenLayers.Projection("EPSG:4326"),
           new OpenLayers.Projection("EPSG:900913")
         );
 
