@@ -1,11 +1,14 @@
 package com.uproot.trackme;
 
 import java.util.ArrayList
+import java.util.ConcurrentModificationException
 import java.util.zip.GZIPInputStream
+
 import scala.Option.option2Iterable
 import scala.collection.JavaConverters.asScalaBufferConverter
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 import scala.collection.JavaConverters.seqAsJavaListConverter
+
 import com.google.appengine.api.datastore.Entity
 import com.google.appengine.api.datastore.FetchOptions
 import com.google.appengine.api.datastore.KeyFactory
@@ -14,6 +17,7 @@ import com.google.appengine.api.datastore.Query.FilterOperator
 import com.google.appengine.api.datastore.Query.FilterPredicate
 import com.google.appengine.api.datastore.Query.SortDirection
 import com.google.appengine.api.users.UserServiceFactory
+
 import Helper.GRACE_PERIOD
 import Helper.LOCATIONS
 import Helper.PASS_KEY
@@ -26,21 +30,24 @@ import Helper.getUserEntity
 import Helper.mkUserKey
 import Helper.userExistsFunc
 import javax.servlet.http.HttpServletRequest
-import java.util.ConcurrentModificationException
 
 class LoggedIn(currUserId: String, req: HttpServletRequest) {
 
   import Helper._
-  private val userExists = userExistsFunc(currUserId)
+  private def userExists = userExistsFunc(currUserId)
   private val userService = UserServiceFactory.getUserService
   private val thisURL = req.getRequestURI
   private val logoutURL = userService.createLogoutURL(thisURL)
+  private val menu = new Menu(
+    Seq(MenuEntry("Home", "icon-home", "/web/home"),
+      MenuEntry("Settings", "icon-wrench", "/web/settings"),
+      MenuEntry("Logout", "icon-share", logoutURL)))
 
-  private def createTemplate(message: xml.Node, jScript: Option[String] = None) = {
-    Helper.createTemplate(currUserId, message, jScript, logoutURL = logoutURL)
+  private def createTemplate(activeTitle: String, message: xml.Node, jScript: Option[String] = None) = {
+    Helper.createTemplate(menu.createMenu(activeTitle), currUserId, message, jScript, logoutURL = logoutURL)
   }
 
-  private def mkTxn[T](f: => T)(implicit m: Manifest[T]) = {
+  private def mkTxn[T](f: => T) = {
     var retry = 10000
     var result: Option[T] = None
     while (retry > 0) {
@@ -63,22 +70,29 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
     result.get
   }
 
+  private def mkAlert(message: String, alertType: Option[String]) = {
+    <div class={ (Seq("alert") ++ alertType.map("alert-" + _)).mkString(" ") }>
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      <strong>{ alertType.map { _ + "! " }.getOrElse("") }</strong>{ message }
+    </div>
+  }
+
   def updateSettings() = {
     val updateVersionNo = req.getParameter("versionNo").toLong
     val passKey = req.getParameter("passKey")
     val shareWith = req.getParameter("shareWith")
-    val usersSharingWith = shareWith.split(",").toList
+    val usersSharingWith = shareWith.split(",").toList.filter(_.length != 0)
     val (validUsers, invalidUsers) = usersSharingWith.partition(userExistsFunc(_))
     val userKey = mkUserKey(currUserId)
-    mkTxn {
+    val (message, alertType) = mkTxn {
       val (userEntity, serverVersionNo) = if (userExists) {
         val userEntity = getUserEntity(currUserId)
         (userEntity, userEntity.getProperty("versionNo").asInstanceOf[Long])
       } else {
-        (new Entity(userKey), 0.toLong)
+        (new Entity(userKey), 0L)
       }
-      val message = if (serverVersionNo == updateVersionNo) {
-        userEntity.setProperty(VERSION_NO, serverVersionNo + 1.toLong)
+      if (serverVersionNo == updateVersionNo) {
+        userEntity.setProperty(VERSION_NO, serverVersionNo + 1L)
         userEntity.setProperty(PASS_KEY, passKey)
         if (validUsers.nonEmpty) {
           userEntity.setProperty(SHARED_WITH, (validUsers).asJava)
@@ -86,39 +100,59 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
           userEntity.removeProperty(SHARED_WITH)
         }
         datastore.put(userEntity)
-        "Settings Updated Successfully!" + {
-          if (invalidUsers.nonEmpty) {
-            " Failed to share with the folling Users as they are not registered Users: " + invalidUsers.mkString(" , ")
-          } else {
-            ""
-          }
+        if (invalidUsers.nonEmpty) {
+          ("Some settings updated, failed to share with the folling Users as they are not registered Users: " +
+            invalidUsers.mkString(" , "), None)
+        } else {
+          ("Settings Updated Successfully!", Some("success"))
         }
       } else {
-        "Update Failed! Attempt to update outdated information."
+        ("Update Failed! Attempt to update outdated information.", Some("error"))
       }
-      settingsPage(Some(message))
     }
+    settingsPage(Some(mkAlert(message, alertType)))
   }
 
-  private def userSettingsForm(passKey: String, sharedWith: String, message: Option[String], versionNo: Long) =
-    <form action="/web/settings" method="post">
-      {
-        message.map { message =>
-          <br/><b>{ xml.Unparsed(message) }</b><br/>
-        }.getOrElse(xml.Null)
-      }
-      <input type="hidden" name="versionNo" value={ versionNo.toString }/>
-      <label>UserId : { currUserId }</label><br/>
-      <label>
-        Pass Key :<input type="text" name="passKey" value={ passKey }/>
-      </label><br/>
-      <label>
-        Share With :<input type="text" name="shareWith" value={ sharedWith }/>
-      </label><br/>
-      <input type="submit"/>
+  private def userSettingsForm(passKey: String, sharedWith: String, message: Option[xml.Node], versionNo: Long) =
+    <form class="form-horizontal" action="/web/settings" method="post">
+      <fieldset>
+        {
+          message.map { alert =>
+            alert
+          }.getOrElse(xml.Null)
+        }
+        <input type="hidden" name="versionNo" value={ versionNo.toString }/>
+        <div class="control-group">
+          <label class="control-label" for="userId">UserId </label>
+          <div class="controls">
+            <span id="userId" class="uneditable-input">{ currUserId }</span>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="passKey">
+            Pass Key
+          </label>
+          <div class="controls">
+            <input id="passKey" type="text" name="passKey" value={ passKey }/>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="shareWith">
+            Share With
+          </label>
+          <div class="controls">
+            <input id="shareWith" type="text" name="shareWith" value={ sharedWith }/>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </div>
+      </fieldset>
     </form>
 
-  def settingsPage(message: Option[String] = None) = {
+  def settingsPage(message: Option[xml.Node] = None) = {
     val settingsForm =
       if (userExists) {
         val userKey = KeyFactory.createKey(USER_DETAILS, currUserId)
@@ -133,14 +167,14 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
         }
         userSettingsForm(passKey, shared, message, versionNo)
       } else {
-        (userSettingsForm("", "", Some("Please Set your PassKey"), 1))
+        (userSettingsForm("", "", Some(mkAlert("Please Set your PassKey", None)), 0))
       }
-    XmlContent(createTemplate(settingsForm))
+    XmlContent(createTemplate("Settings", settingsForm))
   }
 
   private def mkXmlLinkList(listElements: Seq[String], message: Option[String] = None) = {
     if (listElements.nonEmpty) {
-      listElements.map(element => <li><a href={ "/web/user/" + element }>{ element }</a></li>)
+      listElements.map(element => <li><a href={ "/web/user/" + element }><i class="icon-map-marker"></i> { element }</a></li>)
     } else {
       message.map(message => <li>{ message }</li>).getOrElse(xml.Null)
     }
@@ -172,19 +206,25 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
   }
 
   private def getSharingDetails(userId: String) = {
-    <p>
-      <h3>Shared With</h3>
+    <div class="span2">
+      <h4>Shared With</h4>
       <ul>{ mkXmlList(sharedWith(userId), Some("No Shares!")) }</ul>
-      <h3>Shared From</h3>
-      <ul>{ mkXmlLinkList(sharedFrom(userId), Some("No Shares!")) }</ul>
-    </p>
+      <h4>Shared From</h4>
+      <ul class="nav nav-list">{ mkXmlLinkList(sharedFrom(userId), Some("No Shares!")) }</ul>
+    </div>
   }
-
+  val mapElem =
+    <div id="map-wrapper">
+      <div id="map" class="bigmap"></div>
+    </div>
+  val refreshButton =
+    <input type="button" value="Refresh" id="mapUpdate" class="btn btn-inverse"></input>
   def homePage() = {
     if (userExists) {
-      XmlContent(createTemplate(
-        xml.Group(Seq(<div id="map" class="bigmap"></div>,
-          <input type="button" value="Refresh" id="mapUpdate"></input>,
+      XmlContent(createTemplate("Home",
+        xml.Group(Seq(<div class="span8">
+                        { mapElem }{ refreshButton }
+                      </div>,
           getSharingDetails(currUserId))), Some("var retrieveURL = \"/api/json/retrieve\"")))
 
     } else {
@@ -269,15 +309,18 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
     if (userExists) {
       if (sharedFrom(currUserId).contains(userId) || userId == currUserId) {
         val url = "var retrieveURL = \"/web/getuserlocations/" + userId + "\""
-        XmlContent(createTemplate(
-          xml.Group(Seq(<p><b>Showing Map for : { userId }</b></p>,
-            <div id="map" class="bigmap"></div>,
-            <p>
-              <h3>Shared From</h3>
-              <ul>{ mkXmlLinkList(sharedFrom(currUserId), Some("No Shares!")) }</ul>
-            </p>)), Some(url)))
+        XmlContent(createTemplate("",
+          xml.Group(Seq(
+            <div class="span8">
+              <h3>Showing Map for : { userId }</h3>
+              { mapElem }{ refreshButton }
+            </div>,
+            <div class="span2">
+              <h4>Shared From</h4>
+              <ul class="nav nav-list">{ mkXmlLinkList(sharedFrom(currUserId), Some("No Shares!")) }</ul>
+            </div>)), Some(url)))
       } else {
-        XmlContent(createTemplate(<b>The user does not share his locations with you!</b>))
+        XmlContent(createTemplate("", <b>The user does not share his locations with you!</b>))
       }
     } else {
       Redirect("/web/home")
