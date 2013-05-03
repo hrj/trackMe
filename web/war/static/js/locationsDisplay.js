@@ -15,7 +15,7 @@ function transformLongLat(longlat) {
   );
 }
 
-function createMarker(user, loc, map, markerLayer) {
+function createMarker(user, loc, map, markerLayer, icon) {
   var lat = toDegree(loc.lat);
   var long = toDegree(loc.long);
   var ts = loc.ts;
@@ -34,6 +34,7 @@ function createMarker(user, loc, map, markerLayer) {
   var feature = new OpenLayers.Feature(markerLayer, longlat);
   feature.closeBox = true;
   feature.popupClass = popupClass;
+  feature.data.icon = new OpenLayers.Icon(icon);
   feature.data.popupContentHTML = popupContentHTML;
   feature.data.overflow = (true) ? "auto" : "hidden";
   var marker = feature.createMarker();
@@ -71,6 +72,8 @@ function MapView() {
       var size = new OpenLayers.Size(21, 25);
       var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
       var icon = new OpenLayers.Icon('/static/img/marker.png', size, offset);
+      var iconSelf = '/static/img/m1.png';
+      var iconShared = '/static/img/m2.png';
 
       lineLayer = new OpenLayers.Layer.Vector("Line Layer");
       map.addLayer(lineLayer);
@@ -85,7 +88,7 @@ function MapView() {
           var long = toDegree(loc.long);
           var ts = loc.ts;
           var acc = loc.acc;
-          marker = createMarker(curUser,loc, map, myMarkers)
+          marker = createMarker(curUser,loc, map, myMarkers, iconSelf)
           myMarkers.addMarker(marker);
           var myPoints = new OpenLayers.Geometry.Point(long, lat);
           points.push(myPoints);
@@ -98,7 +101,7 @@ function MapView() {
       if(sharedLocations){
         $.each(sharedLocations, function(key, value) {
           var user = key;
-          sharedMarkers.addMarker(createMarker(user, value, map, sharedMarkers));
+          sharedMarkers.addMarker(createMarker(user, value, map, sharedMarkers, iconShared));
         });
       }
 
