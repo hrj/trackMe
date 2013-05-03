@@ -207,7 +207,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
   }
 
   private def getSharingDetails(userId: String) = {
-    <div class="span2">
+    <div class="span3">
       <h4>Shared With</h4>
       <ul>{ mkXmlList(sharedWith(userId), Some("No Shares!")) }</ul>
       <h4>Shared From</h4>
@@ -223,7 +223,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
   def homePage() = {
     if (userExists) {
       XmlContent(createTemplate("Home",
-        xml.Group(Seq(<div class="span8">
+        xml.Group(Seq(<div class="span7">
                         { mapElem }{ refreshButton }
                       </div>,
           getSharingDetails(currUserId))), Some("var retrieveURL = \"/api/json/retrieve\";" + "var curUser = \"" + currUserId + "\";")))
@@ -284,8 +284,8 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
 
   private def getLocations(userId: String) = {
     val userKey = mkUserKey(userId)
-    val query = new Query(LOCATIONS).setAncestor(userKey)
-    val locations = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10)).asScala
+    val query = new Query(LOCATIONS).setAncestor(userKey) addSort ("timeStamp", SortDirection.ASCENDING)
+    val locations = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(LOCATIONS_LIMIT)).asScala
     (locations.map { location =>
       val latLong = LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double])
       val timeStamp = location.getProperty("timeStamp").asInstanceOf[Long]
@@ -318,11 +318,11 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
         val url = "var retrieveURL = \"/web/getuserlocations/" + userId + "\";" + "var curUser = \"" + userId + "\";"
         XmlContent(createTemplate("",
           xml.Group(Seq(
-            <div class="span8">
+            <div class="span7">
               <h3>Showing Map for : { userId }</h3>
               { mapElem }{ refreshButton }
             </div>,
-            <div class="span2">
+            <div class="span3">
               <h4>Shared From</h4>
               <ul class="nav nav-list">{ mkXmlLinkList(sharedFrom(currUserId), Some("No Shares!")) }</ul>
             </div>)), Some(url)))

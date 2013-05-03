@@ -108,6 +108,7 @@ object Helper {
   val FILE_NOT_FOUND = <p>File Not Found</p>
   val GRACE_PERIOD = 3600000
   val USER_DETAILS = "userDetails"
+    val LOCATIONS_LIMIT = 100
   val datastore = DatastoreServiceFactory.getDatastoreService
 
   def userExistsFunc(userId: String) = {
