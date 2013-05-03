@@ -25,14 +25,14 @@ function createMarker(user, loc, map, markerLayer, icon) {
   if(user.length == 0) {
     user = "Self";
   }
-  var popupContentHTML = "User: " + user + "<br />" +
-  "Longitude: " + long + "<br />" +
-  "Latitude: " + lat + "<br />" +
-  "TimeStamp: " + ts + "<br />" +
+  var popupContentHTML = "User: " + user + " <br />" +
+  "Longitude: " + long + " <br />" +
+  "Latitude: " + lat + " <br />" +
+  "TimeStamp: " + ts + " <br />" +
   "Accuracy: " + acc;
 
   var feature = new OpenLayers.Feature(markerLayer, longlat);
-  feature.closeBox = true;
+  feature.closeBox = false;
   feature.popupClass = popupClass;
   feature.data.icon = new OpenLayers.Icon(icon);
   feature.data.popupContentHTML = popupContentHTML;
@@ -50,7 +50,8 @@ function createMarker(user, loc, map, markerLayer, icon) {
       currentPopup = this.popup;
       OpenLayers.Event.stop(evt);
   };
-  marker.events.register("mousedown", feature, markerClick);
+  marker.events.register("mouseover", feature, markerClick);
+  marker.events.register("mouseout", feature, markerClick);
   return marker;
 }
 
