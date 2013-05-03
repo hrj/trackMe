@@ -36,7 +36,7 @@ case class Session(id: String, userId: String, passKey: String, locationDetails:
 case class LatLong(latitude: Double, longitude: Double) {
   def isValid = {
     latitude >= Constants.MINUS_PIby2 && latitude <= Constants.PIby2 &&
-    longitude <= Constants.MINUS_PI && longitude >= Constants.PI
+    longitude >= Constants.MINUS_PI && longitude <= Constants.PI
   }
 
   def mkJSON = "{\"lat\":" + latitude + ", \"long\":" + longitude + "}"
