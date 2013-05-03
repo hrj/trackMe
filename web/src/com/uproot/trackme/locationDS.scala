@@ -19,13 +19,15 @@ object Constants {
   val MINUS_PIby2 = -PIby2
 }
 
-case class Location(latLong: LatLong, accuracy: Int, timeStamp: Long) {
+case class Location(latLong: LatLong, accuracy: Long, timeStamp: Long) {
   def this(locDetails: scala.xml.Node) = this(LatLong(locDetails.attrDouble("latitude"), locDetails.attrDouble("longitude")),
     locDetails.attrInt("accuracy"), locDetails.attrLong("timestamp"))
 
   def isValid(maxTime: Long) = {
     latLong.isValid && accuracy < Constants.ACCURACY_LIMIT && timeStamp < maxTime
   }
+
+  def mkJSON = "{\"lat\":" + latLong.latitude + ", \"long\":" + latLong.longitude + ", \"ts\":" + timeStamp + ", \"acc\":" + accuracy + "}"
 }
 
 case class Session(id: String, userId: String, passKey: String, locationDetails: List[Location]) {

@@ -226,7 +226,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
         xml.Group(Seq(<div class="span8">
                         { mapElem }{ refreshButton }
                       </div>,
-          getSharingDetails(currUserId))), Some("var retrieveURL = \"/api/json/retrieve\"")))
+          getSharingDetails(currUserId))), Some("var retrieveURL = \"/api/json/retrieve\";" + "var curUser = \"" + currUserId + "\";")))
 
     } else {
       Redirect("/web/settings")
@@ -262,7 +262,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
 
   private def quote(value: String) = "\"" + value + "\""
 
-  private def sharedLocationsMkJson(sharedLocations: Seq[(String, LatLong)]) = {
+  private def sharedLocationsMkJson(sharedLocations: Seq[(String, Location)]) = {
     "\"sharedLocations\":" + sharedLocations.map { user =>
       quote(user._1) + ":" + user._2.mkJSON
     }.mkString("{", ",", "}")
@@ -274,7 +274,10 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
       val userQuery = new Query(LOCATIONS).setAncestor(userKey) addSort ("timeStamp", SortDirection.DESCENDING)
       val usersLastLocation = ((datastore.prepare(userQuery)).asList(FetchOptions.Builder.withLimit(1))).asScala.headOption
       usersLastLocation.map { location =>
-        (sharerId, LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double]))
+        val latLong = LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double])
+        val timeStamp = location.getProperty("timeStamp").asInstanceOf[Long]
+        val accuracy = location.getProperty("accuracy").asInstanceOf[Long]
+        (sharerId, Location(latLong, accuracy, timeStamp))
       }
     }
   }
@@ -284,7 +287,10 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
     val query = new Query(LOCATIONS).setAncestor(userKey)
     val locations = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10)).asScala
     (locations.map { location =>
-      (LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double])).mkJSON
+      val latLong = LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double])
+      val timeStamp = location.getProperty("timeStamp").asInstanceOf[Long]
+      val accuracy = location.getProperty("accuracy").asInstanceOf[Long]
+      (Location(latLong, accuracy, timeStamp)).mkJSON
     }).mkString("\"locations\":[", ",", "]")
   }
 
@@ -309,7 +315,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
   def viewLocations(userId: String) = {
     if (userExists) {
       if (sharedFrom(currUserId).contains(userId) || userId == currUserId) {
-        val url = "var retrieveURL = \"/web/getuserlocations/" + userId + "\""
+        val url = "var retrieveURL = \"/web/getuserlocations/" + userId + "\";" + "var curUser = \"" + userId + "\";"
         XmlContent(createTemplate("",
           xml.Group(Seq(
             <div class="span8">

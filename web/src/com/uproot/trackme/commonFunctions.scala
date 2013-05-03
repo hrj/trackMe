@@ -148,7 +148,7 @@ object Helper {
           <div class="row-fluid">
             <div class="span2">
               <h3>TrackMe</h3>
-              <i class="icon-user"></i>{ userName }
+              <i class="icon-user"></i> { userName }
               { menu }
             </div>
             { body }
