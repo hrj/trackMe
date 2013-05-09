@@ -91,8 +91,8 @@ class CommonFunctions(req: HttpServletRequest) {
       f(new LoggedIn(currUserId, req))
     } else {
       format match {
-        case "xml" => XmlContent(ResponseStatus(false, "Invalid UserID or PassKey").mkXML)
-        case "json" => JsonContent(ResponseStatus(false, "Cannot Retrieve as the user does not exists!").mkJson)
+        case "xml" => XmlContent(ResponseStatus(false, "Invalid UserID or PassKey").mkXML, 400)
+        case "json" => JsonContent(ResponseStatus(false, "Cannot Retrieve as the user does not exists!").mkJson, 400)
       }
     }
   }

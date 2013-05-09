@@ -235,9 +235,11 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
     }
   }
 
+  val isDevServer = "yes" equals System.getProperty("devServer")
+
   def storeLocations() = {
     val inputStream = req.getHeader("Content-Encoding") match {
-      case "gzip" => new GZIPInputStream(req.getInputStream)
+      case "gzip" if(isDevServer) => new GZIPInputStream(req.getInputStream)
       case _ => req.getInputStream
     }
 
