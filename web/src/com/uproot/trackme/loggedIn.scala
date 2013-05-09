@@ -218,8 +218,10 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
     <div id="map-wrapper">
       <div id="map" class="bigmap"></div>
     </div>
+
   val refreshButton =
     <input type="button" value="Refresh" id="mapUpdate" class="btn btn-inverse"></input>
+
   def homePage() = {
     if (userExists) {
       XmlContent(createTemplate("Home",
@@ -256,7 +258,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
       datastore.put(locationEntities.asJava)
       XmlContent(ResponseStatus(true, "Location added successfuly").mkXML)
     } else {
-      XmlContent(ResponseStatus(false, "Invalid Locations").mkXML)
+      XmlContent(ResponseStatus(false, "Invalid Locations").mkXML, 400)
     }
   }
 
@@ -284,7 +286,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
 
   private def getLocations(userId: String) = {
     val userKey = mkUserKey(userId)
-    val query = new Query(LOCATIONS).setAncestor(userKey) addSort ("timeStamp", SortDirection.ASCENDING)
+    val query = new Query(LOCATIONS).setAncestor(userKey) addSort ("timeStamp", SortDirection.DESCENDING)
     val locations = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(LOCATIONS_LIMIT)).asScala
     (locations.map { location =>
       val latLong = LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double])
@@ -296,7 +298,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
 
   def getUserLocations(userId: String) = {
     if ((userId == currUserId || (sharedFrom(currUserId).contains(userId) && userExistsFunc(userId)))) {
-      JsonContent("{" + getLocations(userId) + "}", 200)
+      JsonContent("{" + getLocations(userId) + "}")
     } else {
       JsonContent(ResponseStatus(false, "Cannot Retrieve as there are no locations stored for this user!").mkJson, 401)
     }
@@ -327,7 +329,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
               <ul class="nav nav-list">{ mkXmlLinkList(sharedFrom(currUserId), Some("No Shares!")) }</ul>
             </div>)), Some(url)))
       } else {
-        XmlContent(createTemplate("", <b>The user does not share his locations with you!</b>))
+        XmlContent(createTemplate("", <b>The user does not share his locations with you!</b>), 400)
       }
     } else {
       Redirect("/web/home")

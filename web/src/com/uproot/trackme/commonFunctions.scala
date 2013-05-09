@@ -134,6 +134,7 @@ object Helper {
       <head>
         <script src="/static/js/jquery-1.9.1.min.js"></script>
         <script src="/static/js/bootstrap.min.js"></script>
+        <script src="/static/js/moment.min.js"></script>
         <link rel="stylesheet" href="/static/style/style.css" type="text/css"></link>
         <link href="/static/style/bootstrap.min.css" rel="stylesheet" media="screen"></link>
         {
