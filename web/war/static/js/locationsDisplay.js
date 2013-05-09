@@ -19,7 +19,8 @@ function createMarker(user, loc, map, markerLayer, icon) {
   var lat = toDegree(loc.lat);
   var long = toDegree(loc.long);
   var ts = loc.ts;
-  var day = moment(Number(ts)).format("dddd, MMMM Do YYYY, h:mm:ss a");
+  var tsmoment = moment(Number(ts));
+  var day = tsmoment.format("dddd, MMMM Do YYYY, h:mm:ss a");
   var acc = loc.acc;
   var longlat = transformLongLat(new OpenLayers.LonLat(long, lat))
   var popupClass = AutoSizeFramedCloud;
