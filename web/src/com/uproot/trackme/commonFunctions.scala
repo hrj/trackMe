@@ -91,8 +91,8 @@ class CommonFunctions(req: HttpServletRequest) {
       f(new LoggedIn(currUserId, req))
     } else {
       format match {
-        case "xml" => XmlContent(ResponseStatus(false, "Invalid UserID or PassKey").mkXML)
-        case "json" => JsonContent(ResponseStatus(false, "Cannot Retrieve as the user does not exists!").mkJson)
+        case "xml" => XmlContent(ResponseStatus(false, "Invalid UserID or PassKey").mkXML, 400)
+        case "json" => JsonContent(ResponseStatus(false, "Cannot Retrieve as the user does not exists!").mkJson, 400)
       }
     }
   }
@@ -108,6 +108,7 @@ object Helper {
   val FILE_NOT_FOUND = <p>File Not Found</p>
   val GRACE_PERIOD = 3600000
   val USER_DETAILS = "userDetails"
+    val LOCATIONS_LIMIT = 100
   val datastore = DatastoreServiceFactory.getDatastoreService
 
   def userExistsFunc(userId: String) = {
@@ -133,6 +134,7 @@ object Helper {
       <head>
         <script src="/static/js/jquery-1.9.1.min.js"></script>
         <script src="/static/js/bootstrap.min.js"></script>
+        <script src="/static/js/moment.min.js"></script>
         <link rel="stylesheet" href="/static/style/style.css" type="text/css"></link>
         <link href="/static/style/bootstrap.min.css" rel="stylesheet" media="screen"></link>
         {
