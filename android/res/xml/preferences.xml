@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <com.uprootlabs.trackme.MyEditTextPreference
+        android:dialogTitle="UserID"
+        android:inputType="textEmailAddress"
+        android:key="userID"
+        android:summary="@string/userid_summary"
+        android:title="@string/userid" />
+
+    <com.uprootlabs.trackme.MyEditTextPreferencePassword
+        android:dialogTitle="PassKey"
+        android:key="passKey"
+        android:summary="@string/passkey_summary"
+        android:title="@string/passkey" />
+
+    <com.uprootlabs.trackme.MyEditTextPreference
+        android:defaultValue="@string/capture_frequency_default"
+        android:dialogTitle="@string/capture_frequency"
+        android:inputType="number"
+        android:key="captureFrequency"
+        android:summary="@string/capture_frequency_summary"
+        android:title="@string/capture_frequency" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="autoUpdate"
+        android:summary="@string/auto_update_summary"
+        android:title="@string/auto_update" />
+
+    <com.uprootlabs.trackme.MyEditTextPreference
+        android:defaultValue="@string/update_frequency_default"
+        android:dependency="autoUpdate"
+        android:dialogTitle="@string/update_frequency"
+        android:inputType="number"
+        android:key="updateFrequency"
+        android:summary="@string/update_frequency_summary"
+        android:title="@string/update_frequency" />
+
+</PreferenceScreen>
