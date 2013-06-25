@@ -20,19 +20,21 @@ import android.net.http.AndroidHttpClient;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
 public class UploadService extends Service {
 
-  private static final String UPLOAD_TAG = "uploadService";
+  private static final String UPLOAD_SERVICE_TAG = "uploadService";
   private String sessionDetails = "";
   private String userId;
   private String passKey;
   private Thread t;
+  private String captureServiceStatus;
   LocationDBHelper myLocationDB = new LocationDBHelper(this);
-  private static final int MILLISECONDS_PER_SECOND = 1000;
-  private static final int SECONDS_PER_MINUTE = 60;
+  public static final int MILLISECONDS_PER_SECOND = 1000;
+  public static final int SECONDS_PER_MINUTE = 60;
   SharedPreferences myPreferences;
   PendingIntent piAutoUpdate;
   AlarmManager alarmManager;
@@ -40,7 +42,7 @@ public class UploadService extends Service {
   @Override
   public void onCreate() {
     super.onCreate();
-    Log.d(UPLOAD_TAG, "Upload Service Created");
+    Log.d(UPLOAD_SERVICE_TAG, "Upload Service Created");
   }
 
   @Override
@@ -58,21 +60,30 @@ public class UploadService extends Service {
     setForegroundService();
 
     if (userId.equals("") || passKey.equals("")) {
-      Log.d(UPLOAD_TAG, "Empty UserID or PassKey");
+      Log.d(UPLOAD_SERVICE_TAG, "Empty UserID or PassKey");
       Toast.makeText(this, "Empty UserID or PassKey", Toast.LENGTH_LONG).show();
       stopSelf();
     } else {
-      Log.d(UPLOAD_TAG, "Upload Service Started");
+      Log.d(UPLOAD_SERVICE_TAG, "Upload Service Started");
       sessionDetails = getSessionDetails();
 
       uploadeSession(sessionDetails);
 
+      Intent intentStatus = new Intent(LocationService.ACTION_QUERY_STATUS_UPLOAD_SERVICE);
+      LocalBroadcastManager.getInstance(this).sendBroadcastSync(intentStatus);
+
+      captureServiceStatus = intentStatus.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
+      Log.d(UPLOAD_SERVICE_TAG, captureServiceStatus + " " + "Status");
+
       boolean autoUpdate = myPreferences.getBoolean("autoUpdate", false);
-      boolean captureLocations = myPreferences.getBoolean("captureLocations", false);
-      Log.d(UPLOAD_TAG, "autoupdate" + autoUpdate + " " + "Capture" + captureLocations);
+      boolean captureLocations = false; 
+      if(captureServiceStatus.equals(LocationService.STATUS_CAPTURING_LOCATIONS)) {
+        captureLocations = true;
+      }
+      Log.d(UPLOAD_SERVICE_TAG, "autoupdate" + autoUpdate + " " + "Capture" + captureLocations);
       setAutoUpload(autoUpdate, captureLocations);
     }
-    Log.d(UPLOAD_TAG, "exiting service");
+    Log.d(UPLOAD_SERVICE_TAG, "exiting service");
     return Service.START_NOT_STICKY;
   }
 
@@ -93,12 +104,12 @@ public class UploadService extends Service {
       long timeOrLengthOfWait = updateFrequency * MILLISECONDS_PER_SECOND;
       int alarmType = AlarmManager.ELAPSED_REALTIME_WAKEUP;
       alarmManager.set(alarmType, SystemClock.elapsedRealtime() + timeOrLengthOfWait, piAutoUpdate);
-      Log.d(UPLOAD_TAG, "Auto Update Set" + " " + updateFrequency);
+      Log.d(UPLOAD_SERVICE_TAG, "Auto Update Set" + " " + updateFrequency);
     }
   }
 
   private String getSessionDetails() {
-    Log.d(UPLOAD_TAG, "started retrival");
+    Log.d(UPLOAD_SERVICE_TAG, "started retrival");
     SQLiteDatabase db = myLocationDB.getReadableDatabase();
     // SQLiteDatabase db = openOrCreateDatabase(LocationDBDetails.DATABASE_NAME,
     // SQLiteDatabase.OPEN_READONLY, null);
@@ -131,18 +142,18 @@ public class UploadService extends Service {
 
     db.close();
 
-    Log.d(UPLOAD_TAG, "Locations Retreived");
+    Log.d(UPLOAD_SERVICE_TAG, "Locations Retreived");
     return locations.toString();
 
   }
 
   private void uploadeSession(final String session) {
-    Log.d(UPLOAD_TAG, "Starting Upload Thread");
+    Log.d(UPLOAD_SERVICE_TAG, "Starting Upload Thread");
     t = new Thread() {
       @Override
       public void run() {
-        Log.d(UPLOAD_TAG, "Thread Started");
-        Log.d(UPLOAD_TAG, session);
+        Log.d(UPLOAD_SERVICE_TAG, "Thread Started");
+        Log.d(UPLOAD_SERVICE_TAG, session);
         // String session1 =
         // "<session id=\"chetan123\" userid=\"trackme.git@gmail.com\" passkey=\"123456\">"
         // +
@@ -170,7 +181,7 @@ public class UploadService extends Service {
         } catch (IOException e) {
           e.printStackTrace();
         }
-        Log.d(UPLOAD_TAG, "Thread Compleated");
+        Log.d(UPLOAD_SERVICE_TAG, "Thread Compleated");
       }
     };
     t.start();
@@ -178,7 +189,7 @@ public class UploadService extends Service {
   }
 
   private void clearDB(long time) {
-    Log.d(UPLOAD_TAG, "Clearing");
+    Log.d(UPLOAD_SERVICE_TAG, "Clearing");
     String selection = LocationDBDetails.COLUMN_NAME_TS + " < ?";
     String[] selectionArgs = { String.valueOf(time) };
     SQLiteDatabase db = myLocationDB.getWritableDatabase();
@@ -186,11 +197,11 @@ public class UploadService extends Service {
     // SQLiteDatabase.OPEN_READWRITE, null);
     db.delete(LocationDBDetails.TABLE_NAME, selection, selectionArgs);
     db.close();
-    Log.d(UPLOAD_TAG, "Cleared");
+    Log.d(UPLOAD_SERVICE_TAG, "Cleared");
   }
 
   @Override
   public void onDestroy() {
-    Log.d(UPLOAD_TAG, "Destroyed");
+    Log.d(UPLOAD_SERVICE_TAG, "Destroyed");
   }
 }

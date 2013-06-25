@@ -3,12 +3,15 @@ package com.uprootlabs.trackme;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,8 +21,8 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
-  private static final String MAIN_TAG = "mainActivity";
-  private static final int MILLISECONDS_PER_SECOND = 1000;
+  public static final String MAIN_ACTIVITY_LOCATION_SERVICE_STATUS = "MainActivity/locationServiceStatus";
+  private static final String MAIN_ACTIVITY_TAG = "mainActivity";
   private static final String NOT_SET = "Value not Set!";
 
   // private TextView valueLat;
@@ -34,23 +37,57 @@ public class MainActivity extends Activity {
   SharedPreferences myPreferences;
   SharedPreferences.Editor myPreferencesEditor;
 
+  private String captureServiceStatus;
   PendingIntent pi;
   AlarmManager alarmManager;
+  private BroadcastReceiver broadCastReceiverMainActivity = new BroadcastReceiver() {
 
-  public boolean captureLocations;
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      String serviceStatus = intent.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
+
+      if (serviceStatus.equals(LocationService.STATUS_WARMED_UP)) {
+        captureServiceStatus = LocationService.STATUS_WARMED_UP;
+        startStopButton.setEnabled(true);
+      }
+    }
+
+  };
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
+    valueCaptureFrequency = (TextView) findViewById(R.id.valueCaptureFrequency);
+    valueUpdateFrequency = (TextView) findViewById(R.id.valueUpdateFrequency);
+    startStopButton = (Button) findViewById(R.id.startStop);
+
+    IntentFilter locationsServiceStatusIntentFilter = new IntentFilter(MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
+
+    LocalBroadcastManager.getInstance(this).registerReceiver(broadCastReceiverMainActivity, locationsServiceStatusIntentFilter);
+
+    Intent intent = new Intent("locationServiceStatus/MainActivity");
+    intent.setAction(LocationService.ACTION_QUERY_STATUS_MAIN_ACTIVITY);
+
+    LocalBroadcastManager.getInstance(this).sendBroadcastSync(intent);
+
+    captureServiceStatus = intent.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
+    Log.d(MAIN_ACTIVITY_TAG,"on Create" + " " + captureServiceStatus);
+
+    if (captureServiceStatus == null) {
+      startServiceWarmUp();
+    } else if (captureServiceStatus.equals(LocationService.STATUS_WARMED_UP)) {
+      startStopButton.setEnabled(true);
+    } else if (captureServiceStatus.equals(LocationService.STATUS_CAPTURING_LOCATIONS)) {
+      startStopButton.setEnabled(true);
+      startStopButton.setText(R.string.stop_capturing);
+    }
+
     // valueLat = (TextView) findViewById(R.id.lat);
     // valueLng = (TextView) findViewById(R.id.lng);
     // valueAccuracy = (TextView) findViewById(R.id.accuracy);
     // valueTimeStamp = (TextView) findViewById(R.id.timeStamp);
-    valueCaptureFrequency = (TextView) findViewById(R.id.valueCaptureFrequency);
-    valueUpdateFrequency = (TextView) findViewById(R.id.valueUpdateFrequency);
-    startStopButton = (Button) findViewById(R.id.startStop);
 
     myPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     myPreferencesEditor = myPreferences.edit();
@@ -67,13 +104,6 @@ public class MainActivity extends Activity {
 
   public void onResume() {
     super.onResume();
-    captureLocations = myPreferences.getBoolean("captureLocations", false);
-    Log.d(MAIN_TAG, " " + captureLocations);
-
-    if (captureLocations)
-      startStopButton.setText(R.string.stop_capturing);
-    else
-      startStopButton.setText(R.string.start_capturing);
 
     String captureFrequency = myPreferences.getString("captureFrequency", NOT_SET);
     String updateFrequency = myPreferences.getString("updateFrequency", NOT_SET);
@@ -102,49 +132,77 @@ public class MainActivity extends Activity {
   }
 
   public void startStopCapturing(View v) {
-    Log.d(MAIN_TAG, "Start/Stop");
+    Log.d(MAIN_ACTIVITY_TAG, "Start/Stop");
 
-    if (captureLocations)
-      captureLocations = false;
-    else
-      captureLocations = true;
-
-    myPreferencesEditor.putBoolean("captureLocations", captureLocations);
-    myPreferencesEditor.commit();
-
-    if (captureLocations) {
+    Log.d(MAIN_ACTIVITY_TAG, captureServiceStatus + " " + "Service Status");
+    if (captureServiceStatus.equals(LocationService.STATUS_WARMED_UP)) {
       startCapturingLocations();
-      startStopButton.setText(R.string.stop_capturing);
-    } else {
+    } else if(captureServiceStatus.equals(LocationService.STATUS_CAPTURING_LOCATIONS)){
       stopCapturingLocations();
       startStopButton.setText(R.string.start_capturing);
     }
 
   }
 
-  public void startCapturingLocations() {
+  private void startServiceWarmUp() {
+    Intent intent = new Intent(this, LocationService.class);
+    intent.setAction("warmUpLocationService/MainActivity");
+    startService(intent);
+  }
+
+  private void startCapturingLocations() {
     boolean autoUpdate = myPreferences.getBoolean("autoUpdate", false);
     if (autoUpdate) {
+
       int updateFrequency = Integer.parseInt(myPreferences.getString("updateFrequency", "0"));
       pi = PendingIntent.getService(this, 0, new Intent(this, UploadService.class), 0);
       alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-      long timeOrLengthOfWait = updateFrequency * MILLISECONDS_PER_SECOND;
+
+      long timeOrLengthOfWait = updateFrequency * UploadService.MILLISECONDS_PER_SECOND * UploadService.SECONDS_PER_MINUTE;
       int alarmType = AlarmManager.ELAPSED_REALTIME_WAKEUP;
+
       alarmManager.set(alarmType, SystemClock.elapsedRealtime() + timeOrLengthOfWait, pi);
-      Log.d(MAIN_TAG, "Auto Update Set");
+
+      Log.d(MAIN_ACTIVITY_TAG, "Auto Update Set");
     }
-    Intent intent = new Intent(this, GetLocationService.class);
-    startService(intent);
+
+    Intent intentStatus = new Intent(LocationService.ACTION_CAPTURE_LOCATIONS);
+    LocalBroadcastManager.getInstance(this).sendBroadcastSync(intentStatus);
+
+    captureServiceStatus = intentStatus.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
+
+    if (captureServiceStatus.equals(LocationService.STATUS_CAPTURING_LOCATIONS)) {
+      startStopButton.setText(R.string.stop_capturing);
+    } else if (captureServiceStatus.equals(LocationService.ERROR_CAPTURING_LOCATIONS)) {
+      showErrorDialog();
+    }
+  }
+
+  private void showErrorDialog() {
+    // TODO Auto-generated method stub
+
   }
 
   public void uploadLocations(View v) {
-    Intent intent = new Intent(this, UploadService.class);
-    startService(intent);
-    Log.d(MAIN_TAG, "Upload");
+
+     Intent intent = new Intent(this, UploadService.class);
+     startService(intent);
+     Log.d(MAIN_ACTIVITY_TAG, "Upload");
   }
 
-  public void stopCapturingLocations() {
-    stopService(new Intent(this, GetLocationService.class));
+  private void stopCapturingLocations() {
+    Intent intentStatus = new Intent(LocationService.ACTION_STOP_CAPTURIGN_LOCATIONS);
+    LocalBroadcastManager.getInstance(this).sendBroadcastSync(intentStatus);
+
+    captureServiceStatus = intentStatus.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
+    Log.d(MAIN_ACTIVITY_TAG, captureServiceStatus + " " + "Status");
+
+    if (captureServiceStatus.equals(LocationService.STATUS_WARMED_UP)) {
+      startStopButton.setText(R.string.start_capturing);
+    } else if (captureServiceStatus.equals(LocationService.ERROR_CAPTURING_LOCATIONS)) {
+      showErrorDialog();
+    }
+
   }
 
   protected void onStop() {
