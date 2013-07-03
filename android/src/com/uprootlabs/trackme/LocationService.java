@@ -24,7 +24,7 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 
-public class LocationService extends Service implements LocationListener, GooglePlayServicesClient.ConnectionCallbacks,
+public final class LocationService extends Service implements LocationListener, GooglePlayServicesClient.ConnectionCallbacks,
     GooglePlayServicesClient.OnConnectionFailedListener {
 
   public static final String ACTION_CAPTURE_LOCATIONS = "LocationService/captureLocations";
@@ -43,16 +43,16 @@ public class LocationService extends Service implements LocationListener, Google
   private LocationClient myLocationClient;
   private LocationRequest myLocationRequest;
   private int errorCode;
-  private static final double PI_BY_180 = Math.PI / 180;
   private boolean capturingLocations = false;
-  LocationDBHelper myLocationDB = new LocationDBHelper(this);
+//  TrackMeDBHelper myLocationDB = new TrackMeDBHelper(this);
   SharedPreferences myPreferences;
+//  private TrackMeDB db = new TrackMeDB(myLocationDB.getWritableDatabase());
 
-  private BroadcastReceiver broadCastReceiverLocationService = new BroadcastReceiver() {
+  private final BroadcastReceiver broadCastReceiverLocationService = new BroadcastReceiver() {
 
     @Override
-    public void onReceive(Context context, Intent intent) {
-      String action = intent.getAction();
+    public void onReceive(final Context context, final Intent intent) {
+      final String action = intent.getAction();
       if (action.equals(ACTION_CAPTURE_LOCATIONS)) {
         Log.d(LOCATION_SERVICE_TAG, "capture Request");
         startCapture(intent);
@@ -76,7 +76,7 @@ public class LocationService extends Service implements LocationListener, Google
 
   @Override
   public void onCreate() {
-    IntentFilter intentFilter = new IntentFilter();
+    final IntentFilter intentFilter = new IntentFilter();
     intentFilter.addAction(ACTION_CAPTURE_LOCATIONS);
     intentFilter.addAction(ACTION_QUERY_STATUS_MAIN_ACTIVITY);
     intentFilter.addAction(ACTION_QUERY_STATUS_UPLOAD_SERVICE);
@@ -84,18 +84,19 @@ public class LocationService extends Service implements LocationListener, Google
 
     LocalBroadcastManager.getInstance(this).registerReceiver(broadCastReceiverLocationService, intentFilter);
 
+
     super.onCreate();
     Log.d(LOCATION_SERVICE_TAG, "Service Created");
   }
 
   @Override
-  public IBinder onBind(Intent intent) {
+  public IBinder onBind(final Intent intent) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public int onStartCommand(Intent intent, int flags, int startId) {
+  public int onStartCommand(final Intent intent, final int flags, final int startId) {
     myPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     Log.d(LOCATION_SERVICE_TAG, "Service Started");
 
@@ -112,13 +113,13 @@ public class LocationService extends Service implements LocationListener, Google
     myLocationClient.connect();
   }
 
-  private void startCapture(Intent intent) {
+  private void startCapture(final Intent intent) {
     Log.d(LOCATION_SERVICE_TAG, "From startCapture");
     captureLocations(intent);
     setForegroundService();
   }
 
-  private void captureLocations(Intent intent) {
+  private void captureLocations(final Intent intent) {
     Log.d(LOCATION_SERVICE_TAG, "From captureLocations");
     captureFrequency = (Integer.parseInt(myPreferences.getString("captureFrequency", "10"))) * MILLISECONDS_PER_SECOND;
     myLocationRequest = LocationRequest.create();
@@ -145,8 +146,8 @@ public class LocationService extends Service implements LocationListener, Google
 
   private void setForegroundService() {
     Log.d(LOCATION_SERVICE_TAG, "From setForegroundService");
-    Intent intentNotification = new Intent(this, MainActivity.class);
-    PendingIntent pi = PendingIntent.getActivity(this, 1, intentNotification, 0);
+    final Intent intentNotification = new Intent(this, MainActivity.class);
+    final PendingIntent pi = PendingIntent.getActivity(this, 1, intentNotification, 0);
     notification = new Notification(R.drawable.ic_launcher, "Capturing", System.currentTimeMillis());
     notification.setLatestEventInfo(this, "TrackMe", "Capturing Locatoins", pi);
     notification.flags |= Notification.FLAG_ONGOING_EVENT;
@@ -154,10 +155,10 @@ public class LocationService extends Service implements LocationListener, Google
     startForeground(1, notification);
   }
 
-  private void stopCapturing(Intent intent) {
+  private void stopCapturing(final Intent intent) {
     if (myLocationClient.isConnected())
       myLocationClient.removeLocationUpdates(this);
-    
+
     capturingLocations = false;
 
     Log.d(LOCATION_SERVICE_TAG, "stop Capturing");
@@ -175,41 +176,21 @@ public class LocationService extends Service implements LocationListener, Google
   }
 
   @Override
-  public void onLocationChanged(Location location) {
-    long timeStamp = System.currentTimeMillis();
+  public void onLocationChanged(final Location location) {
+    final long timeStamp = System.currentTimeMillis();
     Log.d(LOCATION_SERVICE_TAG, "Locations Changed");
-    double lat = location.getLatitude() * PI_BY_180;
-    double lng = location.getLongitude() * PI_BY_180;
-    long acc = (long) location.getAccuracy();
-
-    if (acc < 500) {
-      SQLiteDatabase db = myLocationDB.getWritableDatabase();
-      // SQLiteDatabase db =
-      // openOrCreateDatabase(LocationDBDetails.DATABASE_NAME,
-      // SQLiteDatabase.OPEN_READWRITE, null);
-      ContentValues values = new ContentValues();
-      values.put(LocationDBDetails.COLUMN_NAME_LAT, lat);
-      values.put(LocationDBDetails.COLUMN_NAME_LNG, lng);
-      values.put(LocationDBDetails.COLUMN_NAME_ACC, acc);
-      values.put(LocationDBDetails.COLUMN_NAME_TS, timeStamp);
-      db.insert(LocationDBDetails.TABLE_NAME, null, values);
-      Log.d(LOCATION_SERVICE_TAG, "Location Added");
-    } else {
-      Log.d(LOCATION_SERVICE_TAG, "Location Denied");
-    }
-
-    Log.d(LOCATION_SERVICE_TAG, "" + lat + " " + lng + " " + acc + " " + timeStamp);
+//    db.insertLocations(location, timeStamp);
   }
 
   private boolean servicesConnected() {
-    int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+    final int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
 
     if (ConnectionResult.SUCCESS == resultCode) {
       return true;
     } else {
       Log.d(LOCATION_SERVICE_TAG, "Google Play Service Not Available");
 
-      Intent dialogIntent = new Intent(getBaseContext(), DialogActivity.class);
+      final Intent dialogIntent = new Intent(getBaseContext(), DialogActivity.class);
       dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
       dialogIntent.putExtra("errorCode", errorCode);
       getApplication().startActivity(dialogIntent);
@@ -219,12 +200,12 @@ public class LocationService extends Service implements LocationListener, Google
   }
 
   @Override
-  public void onConnectionFailed(ConnectionResult connectionResult) {
+  public void onConnectionFailed(final ConnectionResult connectionResult) {
     errorCode = connectionResult.getErrorCode();
     if (connectionResult.hasResolution()) {
       Log.d(LOCATION_SERVICE_TAG, "Start Resolution Error");
 
-      Intent mainActivityBroadCastintent = new Intent(MainActivity.MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
+      final Intent mainActivityBroadCastintent = new Intent(MainActivity.MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
       mainActivityBroadCastintent.putExtra(PARAM_LOCATION_SERVICE_STATUS, ERROR_STARTING_SERVICE);
       LocalBroadcastManager.getInstance(this).sendBroadcast(mainActivityBroadCastintent);
 
@@ -238,11 +219,11 @@ public class LocationService extends Service implements LocationListener, Google
     } else {
       Log.d(LOCATION_SERVICE_TAG, "Connection Failure");
 
-      Intent mainActivityBroadCastintent = new Intent(MainActivity.MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
+      final Intent mainActivityBroadCastintent = new Intent(MainActivity.MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
       mainActivityBroadCastintent.putExtra(PARAM_LOCATION_SERVICE_STATUS, ERROR_STARTING_SERVICE);
       LocalBroadcastManager.getInstance(this).sendBroadcast(mainActivityBroadCastintent);
 
-      Intent dialogIntent = new Intent(getBaseContext(), DialogActivity.class);
+      final Intent dialogIntent = new Intent(getBaseContext(), DialogActivity.class);
       dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
       dialogIntent.putExtra("errorCode", errorCode);
       getApplication().startActivity(dialogIntent);
@@ -252,8 +233,8 @@ public class LocationService extends Service implements LocationListener, Google
   }
 
   @Override
-  public void onConnected(Bundle bundle) {
-    Intent mainActivityBroadCastintent = new Intent(MainActivity.MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
+  public void onConnected(final Bundle bundle) {
+    final Intent mainActivityBroadCastintent = new Intent(MainActivity.MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
     mainActivityBroadCastintent.putExtra(PARAM_LOCATION_SERVICE_STATUS, STATUS_WARMED_UP);
     LocalBroadcastManager.getInstance(this).sendBroadcast(mainActivityBroadCastintent);
   }

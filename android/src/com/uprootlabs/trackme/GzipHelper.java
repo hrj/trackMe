@@ -14,7 +14,7 @@ import android.content.Context;
 import android.net.http.AndroidHttpClient;
 
 @SuppressLint("NewApi")
-public class GzipHelper {
+final class GzipHelper {
 	    /**
 	     * Converts an InputStream to String
 	     * 
