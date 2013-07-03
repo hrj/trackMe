@@ -1,0 +1,27 @@
+@startuml
+hide footbox
+title Sequence Diagram Start Capturing Locations but PlayService not available
+actor User as U
+participant MaintActivity as MA
+participant CaptureService as CS
+participant PlayService as PS
+create MA
+U -> MA: Start app
+activate MA
+MA --> U: Display Home Screen
+MA -> MA: Register BroadCast Receiver
+MA ->]: Check for Capture service Status
+MA <-]: Capture Service not running
+create CS
+MA ->> CS: Start Capture Service 
+activate CS
+CS -> CS: Register BroadCast Receiver
+CS -> PS: isPlayServiceAvailable()
+activate PS
+PS -> CS: NO 
+deactivate PS
+CS --> MA: error message
+deactivate CS
+destroy CS
+MA --> U: Show error Dialog
+@enduml
