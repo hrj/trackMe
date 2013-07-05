@@ -53,7 +53,7 @@ final class TrackMeDB {
     final String selection = TrackMeDBDetails.COLUMN_NAME_TS + " < ? AND " + TrackMeDBDetails.COLUMN_NAME_STATUS + " != ?";
     final String[] selectionArgs = { String.valueOf(time), "1" };
     final String orderBy = TrackMeDBDetails.COLUMN_NAME_TS + " ASC";
-    final String uploadID = myPreferences.getNewUploadID();
+    final int uploadID = myPreferences.getNewUploadID();
     Cursor c = getLocations(selection, selectionArgs, orderBy, LOCATIONS_QUERY_LIMIT);
     final List<String> sessionIDs = getSessoinIDs(uploadID, c);
     final List<String> batchIDs = getNewBatchIDs(sessionIDs);
@@ -88,17 +88,17 @@ final class TrackMeDB {
     return 0;
   }
   
-  public void assignUploadID(final String uploadID) {
+  public void assignUploadID(final int uploadID) {
     //TODO assigning a upload batch with an uploadID
     
   }
   
-  public void updateBatchIDs(final List<String> sessionID, final List<String> batchIDs, final String UploadID) {
+  public void updateBatchIDs(final List<String> sessionID, final List<String> batchIDs, final int uploadID) {
     //TODO assign batch id to the locations
     
   }
   
-  private String getLastBatchID(final String sessionID) {
+  private String getLastBatchID(final int sessionID) {
     //TODO get the last assigned batch id for sessionID
    return ""; 
   }
@@ -109,12 +109,12 @@ final class TrackMeDB {
     return batchIDs;
   }
 
-  public void moveLocations(final String uploadID, final List<String> sessions) {
+  public void moveLocations(final int uploadID, final List<String> sessions) {
     //TODO move the locations from current table to its respective table after upload
     
   }
   
-  private List<String> getSessoinIDs(final String uploadID, final Cursor cursor) {
+  private List<String> getSessoinIDs(final int uploadID, final Cursor cursor) {
     List<String> sessionIDs = new ArrayList<String>();
     return sessionIDs;
   }

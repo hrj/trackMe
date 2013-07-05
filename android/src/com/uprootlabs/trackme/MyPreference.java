@@ -49,8 +49,8 @@ public class MyPreference {
     return sessionID; 
   }
   
-  public String getNewUploadID() {
-    return "";
+  public int getNewUploadID() {
+    return 0;
   }
 
 }
