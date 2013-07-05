@@ -50,26 +50,27 @@ if uploadPossible(uploadTime) {
 			do {	
 				getLocationsAsXML(uploadTime)
 				compress the xml string
-				prepare http object and send it to server
-				wait for server response
+				prepare http object
 				while(retryCount < MAX_RETRY) {
+					send locations to server
+					wait for server response
 					if (connection timeout or could not connect to the server) {
 						retryCount += 1	
-						exit = true
+						errorExit = true
 					} else {
 						read response code
-						exit = false
+						errorExit = false
 						retryCount = MAX_RETRY
 					}
 				}
-				if(!exit){
+				if(!errorExit){
 					if(locations uploaded successfully) {
 						moveLocations to its respective table which is named after its sessionID
 					} else {
 						archive these locations
 					}
 				}
-			} while(getQueuedLocationsCount > 0 and !exit)
+			} while(getQueuedLocationsCount > 0 and !errorExit)
 		} else {
 			show error that userID or passKey Invalid
 		}
