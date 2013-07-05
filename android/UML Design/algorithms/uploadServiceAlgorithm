@@ -25,7 +25,7 @@ assignUploadID(uploadID, locationCursor) {
 }
 
 getLocationsAsXML(uploadTime) {
-	uploadID = generateUploadID();
+	uploadID = getNewUploadID();
 	assignUploadID(uploadID, locationsCursor)
 	locationsCursor = getLocations(uploadID)
 	List<String> sessionIDs = getSessions(uploadID, locationsCursor)

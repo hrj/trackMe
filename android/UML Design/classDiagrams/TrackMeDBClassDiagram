@@ -4,10 +4,10 @@ class TrackMeDB {
   +boolean insertLocations(Location location, long timeStamp)
   +StringBuffer getLocationsAsXML(long time)
   +int getQueuedLocationsCount()
-  +void assignUploadID(String uploadID)
-  +void updateBatchIDs(List<String> sessionID, List<String> batchIDs, String UploadID)
+  +void assignUploadID(int uploadID)
+  +void updateBatchIDs(List<String> sessionID, List<String> batchIDs, int UploadID)
   +List<String> getNewBatchIDs(List<String> sessionIDs)
-  +void moveLocations(String uploadID, List<String> sessions)
+  +void moveLocations(int uploadID, List<String> sessions)
   +void clearUploadIDs()
 }
 @enduml
