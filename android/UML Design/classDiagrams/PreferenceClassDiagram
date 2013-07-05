@@ -11,6 +11,6 @@ class MyPreference {
 	+int getUpdateFrequency()
 	+boolean isAutoUpdateSet()
 	+String getNewSessionID()
-	+String getNewUploadID()
+	+int getNewUploadID()
 }
 @enduml
