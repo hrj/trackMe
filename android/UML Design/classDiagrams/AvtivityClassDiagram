@@ -1,0 +1,54 @@
+@startuml
+
+class MainActivity {
+	+{static}String MAIN_ACTIVITY_LOCATION_SERVICE_STATUS
+	+BroadcastReceiver broadCastReceiverMainActivity
+	#void onCreate(Bundle savedInstanceState)
+	+void onStart()
+	+void onPause()
+	+void onResume()
+	+boolean onCreateOptionsMenu(Menu menu)
+	+boolean onOptionsItemSelected(MenuItem item)
+	+void startStopCapturing(View v)
+	+void uploadLocations(View v)
+	#void onStop()
+}
+
+class Activity {
+}
+Activity <|-- MainActivity
+class DialogActivity {
+  #void onCreate(Bundle savedInstanceState)
+  +void onResume()
+  +void onPause()
+  +void onDestroy()
+}
+class Activity {
+}
+Activity <|-- DialogActivity
+class TrackMeDB {
+  +TrackMeDB(SQLiteDatabase db, Context context)
+  +boolean insertLocations(Location location, long timeStamp)
+  +StringBuffer getLocationsAsXML(long time)
+  +int getQueuedLocationsCount()
+  +void assignUploadID(String uploadID)
+  +void updateBatchIDs(List<String> sessionID, List<String> batchIDs, String UploadID)
+  +List<String> getNewBatchIDs(List<String> sessionIDs)
+  +void moveLocations(String uploadID, List<String> sessions)
+  +void clearUploadIDs()
+}
+
+class MyPreference {
+  ~SharedPreferences myPreferences
+  +MyPreference(Context context)
+  +boolean userDetailsNotNull()
+  +String getUserID()
+  +String getPassKey()
+  +String getServerLocation()
+  +int getCaptureFrequency()
+  +int getUpdateFrequency()
+  +boolean isAutoUpdateSet()
+  +String getNewSessionID()
+  +String getNewUploadID()
+}
+@enduml

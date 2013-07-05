@@ -43,31 +43,35 @@ getLocationsAsXML(uploadTime) {
   }
 
 if uploadPossible(uploadTime) {
+	Disallow changes in preferences
 	new thread for upload if upload not happening {
-		check if the user is a valid one
-		clearUploadID()
-		do {	
-			getLocationsAsXML(uploadTime)
-			compress the xml string
-			prepare http object and send it to server
-			wait for server response
-			while(retryCount < MAX_RETRY) {
-				if (connection timeout or could not connect to the server) {
-					retryCount += 1	
-					exit = true
-				} else {
-					read response code
-					exit = false
-					retryCount = MAX_RETRY
+		if the user is a valid one {
+			clearUploadID()
+			do {	
+				getLocationsAsXML(uploadTime)
+				compress the xml string
+				prepare http object and send it to server
+				wait for server response
+				while(retryCount < MAX_RETRY) {
+					if (connection timeout or could not connect to the server) {
+						retryCount += 1	
+						exit = true
+					} else {
+						read response code
+						exit = false
+						retryCount = MAX_RETRY
+					}
 				}
-			}
-			if(!exit){
-				if(locations uploaded successfully) {
-					moveLocations to its respective table which is named after its sessionID
-				} else {
-					archive these locations
+				if(!exit){
+					if(locations uploaded successfully) {
+						moveLocations to its respective table which is named after its sessionID
+					} else {
+						archive these locations
+					}
 				}
-			}
-		} while(getQueuedLocationsCount > 0 and !exit)
-	}
+			} while(getQueuedLocationsCount > 0 and !exit)
+		} else {
+			show error that userID or passKey Invalid
+		}
+	} 
 }
