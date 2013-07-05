@@ -20,14 +20,14 @@ updateBatchID(batchIDs, sessionIDs, uploadID) {
 	assign batchID to only those locations that do not have batchID
 }
 
-assignUploadID(uploadID, locationCursor) {
+assignUploadID(uploadID) {
 	update MAX_LOCATIONS_PER_UPLOAD locations in one query
 }
 
 getLocationsAsXML(uploadTime) {
 	uploadID = getNewUploadID();
-	assignUploadID(uploadID, locationsCursor)
-	locationsCursor = getLocations(uploadID)
+	assignUploadID(uploadID)
+	locationsCursor = getLocationsByUploadID(uploadID)
 	List<String> sessionIDs = getSessions(uploadID, locationsCursor)
 	List<String> batchIDs = getLastBatchID(sessoinIDs)
 	updateBatchID(batchIDs, sessionIDs, uploadID)
