@@ -12,6 +12,10 @@ public class MyPreference {
     myPreferences = PreferenceManager.getDefaultSharedPreferences(context);
   }
   
+ public boolean userDetailsNotNull() {
+   return false;
+ }
+  
   public String getUserID() {
     return "";
   }
@@ -20,7 +24,7 @@ public class MyPreference {
     return "";
   }
 
-  public String getSessionID() {
+  private String getSessionID() {
     return "";
   }
 
@@ -38,6 +42,15 @@ public class MyPreference {
 
   public boolean isAutoUpdateSet() {
     return false;
+  }
+  
+  public String getNewSessionID() {
+    String sessionID = getSessionID();
+    return sessionID; 
+  }
+  
+  public String getNewUploadID() {
+    return "";
   }
 
 }

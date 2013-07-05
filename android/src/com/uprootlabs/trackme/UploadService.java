@@ -214,17 +214,9 @@ public final class UploadService extends Service {
     Log.d(UPLOAD_SERVICE_TAG, "Cleared");
   }
 
-  public String generateSessionID() {
-  return null;
-  }
-
-  public String generateBatchID(String sessionID) {
-  return null;
-  }
-
-  public String generateUploadID() {
-  return null;
-  }
+private void uploadPossible() {
+  
+}
 
   @Override
   public void onDestroy() {
