@@ -1,0 +1,13 @@
+@startuml
+class TrackMeDB {
+  +TrackMeDB(SQLiteDatabase db, Context context)
+  +boolean insertLocations(Location location, long timeStamp)
+  +StringBuffer getLocationsAsXML(long time)
+  +int getQueuedLocationsCount()
+  +void assignUploadID(String uploadID)
+  +void updateBatchIDs(List<String> sessionID, List<String> batchIDs, String UploadID)
+  +List<String> getNewBatchIDs(List<String> sessionIDs)
+  +void moveLocations(String uploadID, List<String> sessions)
+  +void clearUploadIDs()
+}
+@enduml

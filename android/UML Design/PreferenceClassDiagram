@@ -1,0 +1,15 @@
+@startuml
+class MyPreference {
+  ~SharedPreferences myPreferences
+  +MyPreference(Context context)
+  +boolean userDetailsNotNull()
+  +String getUserID()
+  +String getPassKey()
+  +String getServerLocation()
+  +int getCaptureFrequency()
+  +int getUpdateFrequency()
+  +boolean isAutoUpdateSet()
+  +String getNewSessionID()
+  +String getNewUploadID()
+}
+@enduml
