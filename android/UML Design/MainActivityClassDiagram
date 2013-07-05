@@ -1,0 +1,18 @@
+@startuml
+class MainActivity {
+	+{static}String MAIN_ACTIVITY_LOCATION_SERVICE_STATUS
+	+BroadcastReceiver broadCastReceiverMainActivity
+	#void onCreate(Bundle savedInstanceState)
+	+void onStart()
+	+void onPause()
+	+void onResume()
+	+boolean onCreateOptionsMenu(Menu menu)
+	+boolean onOptionsItemSelected(MenuItem item)
+	+void startStopCapturing(View v)
+	+void uploadLocations(View v)
+	#void onStop()
+}
+class Activity {
+}
+Activity <|-- MainActivity
+@enduml
