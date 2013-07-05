@@ -48,5 +48,7 @@
     <string name="stop_capturing">Stop Capturing</string>
     <string name="new_session">New Session</string>
 
+    <string name="key_upload_id">uploadID</string>
+    <string name="key_batch_id">batchID</string>
 
 </resources>

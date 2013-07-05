@@ -37,7 +37,6 @@ public final class LocationService extends Service implements LocationListener, 
   public static final String PARAM_LOCATION_SERVICE_STATUS = "serviceStatus";
   public static final String STATUS_CAPTURING_LOCATIONS = "capturingLocations";
   public static final String STATUS_WARMED_UP = "warmedUp";
-  private static final int MILLISECONDS_PER_SECOND = 1000;
   private int captureFrequency;
   private Notification notification;
   private LocationClient myLocationClient;
@@ -121,7 +120,7 @@ public final class LocationService extends Service implements LocationListener, 
 
   private void captureLocations(final Intent intent) {
     Log.d(LOCATION_SERVICE_TAG, "From captureLocations");
-    captureFrequency = (Integer.parseInt(myPreferences.getString("captureFrequency", "10"))) * MILLISECONDS_PER_SECOND;
+    captureFrequency = (Integer.parseInt(myPreferences.getString("captureFrequency", "10"))) * TrackMeHelper.MILLISECONDS_PER_SECOND;
     myLocationRequest = LocationRequest.create();
     myLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     myLocationRequest.setInterval(captureFrequency);

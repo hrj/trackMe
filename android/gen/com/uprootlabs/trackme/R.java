@@ -284,11 +284,13 @@ containing a value of this type.
          */
         public static final int common_signin_button_text_long=0x7f07000e;
         public static final int key_auto_update=0x7f07002a;
+        public static final int key_batch_id=0x7f07003b;
         public static final int key_capture_frequency=0x7f070026;
         public static final int key_passkey=0x7f07001c;
         public static final int key_server_location=0x7f07001f;
         public static final int key_session_id=0x7f070022;
         public static final int key_update_frequency=0x7f07002d;
+        public static final int key_upload_id=0x7f07003a;
         public static final int key_userid=0x7f070019;
         public static final int label_accuracy=0x7f070032;
         public static final int label_capture_frequency=0x7f070034;
