@@ -1,13 +1,19 @@
 @startuml
 class TrackMeDB {
-  +TrackMeDB(SQLiteDatabase db, Context context)
-  +boolean insertLocations(Location location, long timeStamp)
-  +StringBuffer getLocationsAsXML(long time)
-  +int getQueuedLocationsCount()
-  +void assignUploadID(int uploadID)
-  +void updateBatchIDs(List<String> sessionID, List<String> batchIDs, int UploadID)
-  +List<String> getNewBatchIDs(List<String> sessionIDs)
-  +void moveLocations(int uploadID, List<String> sessions)
-  +void clearUploadIDs()
+	-SQLiteDatabase db
+	-String LOCATIONS_QUERY_LIMIT
+	+TrackMeDB(SQLiteDatabase db, Context context)
+	+boolean insertLocations(Location location, long timeStamp)
+	-Cursor getLocations(String selection, String[] selectionArgs, String orderBy, String limit)
+	+StringBuffer getLocationsAsXML(long time)
+	+int getQueuedLocationsCount()
+	+void assignUploadID(String uploadID)
+	+void updateBatchIDs(List<String> sessionID, List<String> batchIDs, String UploadID)
+	-String getLastBatchID(String sessionID)
+	+List<String> getNewBatchIDs(List<String> sessionIDs)
+	+void moveLocations(String uploadID, List<String> sessions)
+	-List<String> getSessoinIDs(String uploadID, Cursor cursor)
+	-StringBuffer parseXML(Cursor c)
+	+void clearUploadIDs()
 }
 @enduml

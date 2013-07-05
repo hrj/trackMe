@@ -2,7 +2,10 @@
 
 class MainActivity {
 	+{static}String MAIN_ACTIVITY_LOCATION_SERVICE_STATUS
-	+BroadcastReceiver broadCastReceiverMainActivity
+	~SharedPreferences myPreferences
+	~SharedPreferences.Editor myPreferencesEditor
+	~PendingIntent pi
+	-BroadcastReceiver broadCastReceiverMainActivity
 	#void onCreate(Bundle savedInstanceState)
 	+void onStart()
 	+void onPause()
@@ -10,10 +13,13 @@ class MainActivity {
 	+boolean onCreateOptionsMenu(Menu menu)
 	+boolean onOptionsItemSelected(MenuItem item)
 	+void startStopCapturing(View v)
+	-void startServiceWarmUp()
+	-void startCapturingLocations()
+	-void showErrorDialog()
 	+void uploadLocations(View v)
+	-void stopCapturingLocations()
 	#void onStop()
 }
-
 class Activity {
 }
 Activity <|-- MainActivity
@@ -27,29 +33,37 @@ class DialogActivity {
 class Activity {
 }
 Activity <|-- DialogActivity
+
 class TrackMeDB {
-  +TrackMeDB(SQLiteDatabase db, Context context)
-  +boolean insertLocations(Location location, long timeStamp)
-  +StringBuffer getLocationsAsXML(long time)
-  +int getQueuedLocationsCount()
-  +void assignUploadID(int uploadID)
-  +void updateBatchIDs(List<String> sessionID, List<String> batchIDs, int UploadID)
-  +List<String> getNewBatchIDs(List<String> sessionIDs)
-  +void moveLocations(int uploadID, List<String> sessions)
-  +void clearUploadIDs()
+	-SQLiteDatabase db
+	-String LOCATIONS_QUERY_LIMIT
+	+TrackMeDB(SQLiteDatabase db, Context context)
+	+boolean insertLocations(Location location, long timeStamp)
+	-Cursor getLocations(String selection, String[] selectionArgs, String orderBy, String limit)
+	+StringBuffer getLocationsAsXML(long time)
+	+int getQueuedLocationsCount()
+	+void assignUploadID(String uploadID)
+	+void updateBatchIDs(List<String> sessionID, List<String> batchIDs, String UploadID)
+	-String getLastBatchID(String sessionID)
+	+List<String> getNewBatchIDs(List<String> sessionIDs)
+	+void moveLocations(String uploadID, List<String> sessions)
+	-List<String> getSessoinIDs(String uploadID, Cursor cursor)
+	-StringBuffer parseXML(Cursor c)
+	+void clearUploadIDs()
 }
 
 class MyPreference {
-  ~SharedPreferences myPreferences
-  +MyPreference(Context context)
-  +boolean userDetailsNotNull()
-  +String getUserID()
-  +String getPassKey()
-  +String getServerLocation()
-  +int getCaptureFrequency()
-  +int getUpdateFrequency()
-  +boolean isAutoUpdateSet()
-  +String getNewSessionID()
-  +int getNewUploadID()
+	~SharedPreferences myPreferences
+	+MyPreference(Context context)
+	+boolean userDetailsNotNull()
+	+String getUserID()
+	+String getPassKey()
+	-String getSessionID()
+	+String getServerLocation()
+	+int getCaptureFrequency()
+	+int getUpdateFrequency()
+	+boolean isAutoUpdateSet()
+	+String getNewSessionID()
+	+String getNewUploadID()
 }
 @enduml
