@@ -117,7 +117,7 @@ final class TrackMeDB {
     return c;
   }
 
-  public int getQueuedLocationsCount() {
+  public int getQueuedLocationsCount(long uploadTime) {
     // TODO the number of locations queued
     return 0;
   }

@@ -91,11 +91,14 @@ public final class UploadService extends Service {
   }
 
   private static final String UPLOAD_SERVICE_TAG = "uploadService";
-  TrackMeDBHelper myLocationDB = new TrackMeDBHelper(this);
+  SQLiteDatabase myDb;
+  TrackMeDB db;
+  MyPreference myPreference; 
   private String sessionDetails = "";
   private String captureServiceStatus;
   private String userId;
   private String passKey;
+  private int locationCount;
   private PendingIntent piAutoUpdate;
   private boolean running = false;
   private StringBuffer xyz;
@@ -128,6 +131,9 @@ public final class UploadService extends Service {
   @Override
   public void onCreate() {
     super.onCreate();
+    myDb = new TrackMeDBHelper(this).getWritableDatabase();
+    db = new TrackMeDB(myDb, this);
+    myPreference = new MyPreference(this);
     Log.d(UPLOAD_SERVICE_TAG, "Upload Service Created");
   }
 
@@ -205,17 +211,20 @@ public final class UploadService extends Service {
     Log.d(UPLOAD_SERVICE_TAG, "Clearing");
     final String selection = TrackMeDBDetails.COLUMN_NAME_TS + " < ?";
     final String[] selectionArgs = { String.valueOf(time) };
-    final SQLiteDatabase db = myLocationDB.getWritableDatabase();
+//    final SQLiteDatabase db = myLocationDB.getWritableDatabase();
     // SQLiteDatabase db = openOrCreateDatabase(TrackMeDBDetails.DATABASE_NAME,
     // SQLiteDatabase.OPEN_READWRITE, null);
-    db.delete(TrackMeDBDetails.LOCATION_TABLE_NAME, selection, selectionArgs);
-    db.close();
+//    db.delete(TrackMeDBDetails.LOCATION_TABLE_NAME, selection, selectionArgs);
+//    db.close();
     Log.d(UPLOAD_SERVICE_TAG, "Cleared");
   }
 
-private void uploadPossible() {
+  private boolean uploadPossible(long uploadTime) {
+    //TODO userDetailsNotNull() and getQueuedLocationsCount(uploadTime) > 0 and isNetworkAvailable()
+    locationCount = db.getQueuedLocationsCount(uploadTime);
+    return myPreference.userDetailsNotNull() &&  locationCount > 0;
+  } 
   
-}
 
   @Override
   public void onDestroy() {
