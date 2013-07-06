@@ -94,9 +94,10 @@ final class TrackMeDB {
     String userID = myPreferences.getUserID();
     String passKey = myPreferences.getPassKey();
     locationsAsXML.append("<sessions userID=\"" + userID + "\" passKey=\"" + passKey + "\" uid=\"" + uploadID);
-    for(Map.Entry<Tuple, List<String>> session: sessions.entrySet()){
+    for (Map.Entry<Tuple, List<String>> session : sessions.entrySet()) {
       StringBuffer batch = new StringBuffer();
       Tuple t = session.getKey();
+      // TODO toString does not work
       String locations = session.getValue().toString();
       batch.append("<session sid=\"" + t.getSessionID() + "\" bid=\"" + t.getBatchID() + "\">");
       batch.append(locations);
@@ -121,14 +122,12 @@ final class TrackMeDB {
     return 0;
   }
 
-
   public void assignUploadID(final int uploadID, final long uploadTime) {
     String sql = "UPDATE " + TrackMeDBDetails.LOCATION_TABLE_NAME + " SET " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + " = " + uploadID
         + " WHERE " + TrackMeDBDetails.COLUMN_NAME_TS + " < " + uploadTime + " ORDER BY " + TrackMeDBDetails.COLUMN_NAME_TS + " ASC "
         + " LIMIT " + TrackMeDBDetails.LOCATIONS_QUERY_LIMIT;
     db.execSQL(sql);
   }
-
 
   private int getBatchID(String sessionID) {
     final String[] columns = { TrackMeDBDetails.COLUMN_NAME_BATCH_ID };
@@ -162,7 +161,9 @@ final class TrackMeDB {
       } else {
         db.update(TrackMeDBDetails.SESSION_TABLE_NAME, values, TrackMeDBDetails.COLUMN_NAME_SESSION_ID + "=" + sessionID, null);
       }
-      db.update(TrackMeDBDetails.LOCATION_TABLE_NAME, values, TrackMeDBDetails.COLUMN_NAME_SESSION_ID + "=" + sessionID, null);
+      String where = TrackMeDBDetails.COLUMN_NAME_SESSION_ID + " = " + sessionID + " AND " + TrackMeDBDetails.COLUMN_NAME_BATCH_ID
+          + " = null" + " AND " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + " = " + uploadID;
+      db.update(TrackMeDBDetails.LOCATION_TABLE_NAME, values, where, null);
     }
   }
 
