@@ -92,7 +92,6 @@ public final class UploadService extends Service {
 
   private static final String UPLOAD_SERVICE_TAG = "uploadService";
   TrackMeDBHelper myLocationDB = new TrackMeDBHelper(this);
-  final TrackMeDB db = new TrackMeDB(myLocationDB.getWritableDatabase());
   private String sessionDetails = "";
   private String captureServiceStatus;
   private String userId;
