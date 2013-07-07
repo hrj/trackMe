@@ -38,6 +38,7 @@ public final class UploadService extends Service {
         int code = -1;
         HttpResponse response = null;
         String locations = db.getLocationsAsXML(uploadTime);
+        Log.d(UPLOAD_SERVICE_TAG, locations);
         final String serverURL = myPreference.getServerLocation();
         final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
         final HttpPost httpPost = new HttpPost(serverURL);
@@ -68,7 +69,6 @@ public final class UploadService extends Service {
         } else if (code == HttpStatus.SC_BAD_REQUEST || code == 500) {
 
         }
-
       } while (db.getQueuedLocationsCount(uploadTime) > 0 && !errorExit);
 
       synchronized (UploadService.this) {

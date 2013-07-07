@@ -7,6 +7,7 @@ import android.preference.PreferenceManager;
 public class MyPreference {
 
   SharedPreferences myPreferences;
+  SharedPreferences.Editor myPreferencesEditor;
   private final String USER_ID;
   private final String PASSKEY;
   private final String SERVER_LOCATION;
@@ -75,7 +76,12 @@ public class MyPreference {
   }
 
   public int getNewUploadID() {
-    return Integer.parseInt(myPreferences.getString(UPLOAD_ID, "1"));
+    int uploadID = myPreferences.getInt(UPLOAD_ID, 0);
+    uploadID += 1;
+    myPreferencesEditor = myPreferences.edit();
+    myPreferencesEditor.putInt(UPLOAD_ID, uploadID);
+    myPreferencesEditor.commit();
+    return uploadID;
   }
 
 }

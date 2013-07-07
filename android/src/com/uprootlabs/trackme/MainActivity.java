@@ -15,7 +15,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 public final class MainActivity extends Activity {
 
@@ -26,8 +25,8 @@ public final class MainActivity extends Activity {
   // private TextView valueLng;
   // private TextView valueAccuracy;
   // private TextView valueTimeStamp;
-  private TextView valueCaptureFrequency;
-  private TextView valueUpdateFrequency;
+//  private TextView valueCaptureFrequency;
+//  private TextView valueUpdateFrequency;
 
   private Button startStopButton;
 
@@ -60,8 +59,8 @@ public final class MainActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    valueCaptureFrequency = (TextView) findViewById(R.id.valueCaptureFrequency);
-    valueUpdateFrequency = (TextView) findViewById(R.id.valueUpdateFrequency);
+//    valueCaptureFrequency = (TextView) findViewById(R.id.valueCaptureFrequency);
+//    valueUpdateFrequency = (TextView) findViewById(R.id.valueUpdateFrequency);
     startStopButton = (Button) findViewById(R.id.startStop);
 
     final IntentFilter locationsServiceStatusIntentFilter = new IntentFilter(MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
@@ -104,8 +103,8 @@ public final class MainActivity extends Activity {
   public void onResume() {
     super.onResume();
 
-    valueCaptureFrequency.setText(myPreference.getCaptureFrequency());
-    valueUpdateFrequency.setText(myPreference.getUpdateFrequency());
+//    valueCaptureFrequency.setText(myPreference.getCaptureFrequency());
+//    valueUpdateFrequency.setText(myPreference.getUpdateFrequency());
   }
 
   @Override
