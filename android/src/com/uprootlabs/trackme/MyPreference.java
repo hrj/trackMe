@@ -15,7 +15,7 @@ public class MyPreference {
   private final String UPDATE_FREQUENCY;
   private final String SESSION_ID;
   private final String UPLOAD_ID;
-  private final String NOT_SET = "empty";
+  private final String NOT_SET = "";
 
   public MyPreference(Context context) {
     myPreferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -30,11 +30,15 @@ public class MyPreference {
   }
 
   public boolean userDetailsNotNull() {
-    if (getUserID().equals(NOT_SET) || getPassKey().equals(NOT_SET) || getServerLocation().equals(NOT_SET)) {
+    if (isNullOrEmpty(getUserID()) || isNullOrEmpty(getPassKey()) || isNullOrEmpty(getServerLocation())) {
       return false;
     } else {
       return true;
     }
+  }
+  
+  private boolean isNullOrEmpty(String string) {
+    return string.trim().equals("");
   }
 
   public String getUserID() {

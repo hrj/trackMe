@@ -6,7 +6,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.params.HttpConnectionParams;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -15,15 +14,12 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.http.AndroidHttpClient;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 public final class UploadService extends Service {
 
@@ -35,67 +31,69 @@ public final class UploadService extends Service {
     @Override
     public void run() {
       Log.d(UPLOAD_SERVICE_TAG, "Thread Started");
-//      boolean uploadMore = true;
-//      while (uploadMore) {
+      db.clearUploadIDs();
+      boolean errorExit = false;
+      do {
+        errorExit = false;
+        int retryCount = 0;
+        int code = -1;
+        String locations = db.getLocationsAsXML(uploadTime);
+        final String serverURL = myPreference.getServerLocation();
+        final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
+        final HttpPost httpPost = new HttpPost(serverURL);
+        GzipHelper.setCompressedEntity(UploadService.this, locations, httpPost);
+        httpPost.addHeader("userID", myPreference.getUserID());
+        httpPost.addHeader("passkey", myPreference.getPassKey());
+        while (retryCount < MAX_RETRY_COUNT) {
 
-//        StringBuffer locations = db.getLocationsAsXML(time);
-
-//        if (c.moveToFirst()) {
-
-//          sessionDetails = getSessionDetails(c);
-
-
-          for(int i=0; i<10000; i++){
-            xyz.append("this is a small string to test what will be the result of data connection");
-            xyz.append("this is a small string to test what will be the result of data connection");
-            xyz.append("this is a small string to test what will be the result of data connection");
-          }
-          sessionDetails = xyz.toString();
-          Log.d(UPLOAD_SERVICE_TAG, sessionDetails);
-          final String serverURL = "https://testtrackme.appspot.com";
-          final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
-          final HttpPost httpPost = new HttpPost(serverURL + "/api/xml/store?userId=" + userId + "&passKey=" + passKey);
-          GzipHelper.setCompressedEntity(UploadService.this, sessionDetails, httpPost);
           try {
-            httpPost.addHeader("userID", userId);
-            httpPost.addHeader("passkey", passKey);
-            final long execTime = System.currentTimeMillis();
             final HttpResponse response = http.execute(httpPost);
             Log.d(UPLOAD_SERVICE_TAG, response.toString());
-            final int code = response.getStatusLine().getStatusCode();
+            code = response.getStatusLine().getStatusCode();
             http.close();
-            if (code == HttpStatus.SC_OK) {
-              clearDB(execTime);
-            } else if (code == HttpStatus.SC_BAD_REQUEST || code == 500) {
-
-            }
+            errorExit = false;
+            retryCount = MAX_RETRY_COUNT;
           } catch (final ClientProtocolException e) {
-            e.printStackTrace();
+            code = -1;
+            retryCount += 1;
+            errorExit = true;
           } catch (final IOException e) {
+            retryCount += 1;
+            errorExit = true;
+            code = -1;
             e.printStackTrace();
           }
 
-//        } else {
-//          uploadMore = false;
-//        }
+        }
+        if (code == HttpStatus.SC_OK) {
+          // db.moveLocations(uploadID, sessions)
+        } else if (code == HttpStatus.SC_BAD_REQUEST || code == 500) {
 
-//      }
-//      synchronized (UploadService.this) {
-//        running = false;
-//        stopForeground(true);
-//      }
-      // TODO What if the user changes userId, passkey or the server location
-      // during an ongoing upload
+        }
+
+      } while (db.getQueuedLocationsCount(uploadTime) > 0 && !errorExit);
+
+      synchronized (UploadService.this) {
+        running = false;
+        stopForeground(true);
+      }
       Log.d(UPLOAD_SERVICE_TAG, "Thread Compleated");
     }
   }
 
   private static final String UPLOAD_SERVICE_TAG = "uploadService";
+  public static final String UPLOAD_TYPE = "uploadType";
+  public static final String MANUAL_UPLOAD = "manual";
+  public static final String AUTO_UPLOAD = "auto";
+  public static final String UPLOAD_TIME = "uploadTime";
+  public static final int MAX_RETRY_COUNT = 5;
+
   SQLiteDatabase myDb;
   TrackMeDB db;
-  MyPreference myPreference; 
+  MyPreference myPreference;
   private String sessionDetails = "";
   private String captureServiceStatus;
+  private long uploadTime;
   private String userId;
   private String passKey;
   private int locationCount;
@@ -113,11 +111,9 @@ public final class UploadService extends Service {
     return (pi != null);
   }
 
-  public static void startAlarm(final Context context, final PendingIntent pi) {
-    final SharedPreferences myPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-    final int updateFrequency = Integer.parseInt(myPreferences.getString("updateFrequency", "0"));
+  public void setAlarm(final Context context, final PendingIntent pi) {
 
-    final long timeOrLengthOfWait = updateFrequency * TrackMeHelper.MILLISECONDS_PER_SECOND * TrackMeHelper.SECONDS_PER_MINUTE;
+    final long timeOrLengthOfWait = myPreference.getUpdateFrequency();
     final int alarmType = AlarmManager.ELAPSED_REALTIME_WAKEUP;
 
     final AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
@@ -140,34 +136,46 @@ public final class UploadService extends Service {
   @Override
   public int onStartCommand(final Intent intent, final int flags, final int startId) {
 
-        Thread t = new UploadThread();
-        t.start();
-    // TODO Check for continuous blank spaces and add a check for server
-    // location.
+    String uploadType = intent.getStringExtra(UPLOAD_TYPE);
+    if (uploadType.equals(MANUAL_UPLOAD)) {
+      uploadTime = System.currentTimeMillis();
+    } else if (uploadType.equals(AUTO_UPLOAD)) {
+      uploadTime = intent.getLongExtra(UPLOAD_TIME, System.currentTimeMillis());
+      setAutoUpdate();
+    }
 
-//    if (userId.equals("") || passKey.equals("")) {
-//      Log.d(UPLOAD_SERVICE_TAG, "Empty UserID or PassKey");
-//      Toast.makeText(this, "Empty UserID or PassKey", Toast.LENGTH_LONG).show();
-//    } else {
-//
-//      Log.d(UPLOAD_SERVICE_TAG, "Upload Service Started");
-//
-//      uploadeSession();
-//      // Logic to check condition for next alarm
-//      final Intent intentStatus = new Intent(LocationService.ACTION_QUERY_STATUS_UPLOAD_SERVICE);
-//      LocalBroadcastManager.getInstance(this).sendBroadcastSync(intentStatus);
-//
-//      captureServiceStatus = intentStatus.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
-//      Log.d(UPLOAD_SERVICE_TAG, captureServiceStatus + " " + "Status");
-//
-//      final boolean autoUpdate = TrackMeHelper.myPreferences.getBoolean("autoUpdate", false);
-//      boolean captureLocations = false;
-//      if (captureServiceStatus.equals(LocationService.STATUS_CAPTURING_LOCATIONS)) {
-//        captureLocations = true;
-//      }
-//      Log.d(UPLOAD_SERVICE_TAG, "autoupdate" + autoUpdate + " " + "Capture" + captureLocations);
-//      setAutoUpload(autoUpdate, captureLocations);
-//    }
+    uploadeSession();
+
+    // if (userId.equals("") || passKey.equals("")) {
+    // Log.d(UPLOAD_SERVICE_TAG, "Empty UserID or PassKey")
+    // Toast.makeText(this, "Empty UserID or PassKey",
+    // Toast.LENGTH_LONG).show();
+    // } else {
+    //
+    // Log.d(UPLOAD_SERVICE_TAG, "Upload Service Started");
+    //
+    // uploadeSession();
+    // // Logic to check condition for next alarm
+    // final Intent intentStatus = new
+    // Intent(LocationService.ACTION_QUERY_STATUS_UPLOAD_SERVICE);
+    // LocalBroadcastManager.getInstance(this).sendBroadcastSync(intentStatus);
+    //
+    // captureServiceStatus =
+    // intentStatus.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
+    // Log.d(UPLOAD_SERVICE_TAG, captureServiceStatus + " " + "Status");
+    //
+    // final boolean autoUpdate =
+    // TrackMeHelper.myPreferences.getBoolean("autoUpdate", false);
+    // boolean captureLocations = false;
+    // if
+    // (captureServiceStatus.equals(LocationService.STATUS_CAPTURING_LOCATIONS))
+    // {
+    // captureLocations = true;
+    // }
+    // Log.d(UPLOAD_SERVICE_TAG, "autoupdate" + autoUpdate + " " + "Capture" +
+    // captureLocations);
+    // setAutoUpload(autoUpdate, captureLocations);
+    // }
     Log.d(UPLOAD_SERVICE_TAG, "exiting service");
     return Service.START_NOT_STICKY;
   }
@@ -181,10 +189,14 @@ public final class UploadService extends Service {
     startForeground(2, notificaion);
   }
 
-  private void setAutoUpload(final boolean autoUpdate, final boolean captureLocations) {
-    if (autoUpdate && captureLocations) {
-      piAutoUpdate = PendingIntent.getService(this, 0, new Intent(this, UploadService.class), 0);
-      startAlarm(this, piAutoUpdate);
+  private void setAutoUpdate() {
+    if (myPreference.isAutoUpdateSet() && running) {
+      Intent intent = new Intent(this, UploadService.class);
+      intent.putExtra(UPLOAD_TYPE, AUTO_UPLOAD);
+      long uploadTime = System.currentTimeMillis() + myPreference.getUpdateFrequency();
+      intent.putExtra(UPLOAD_TIME, uploadTime);
+      piAutoUpdate = PendingIntent.getService(this, 0, intent, 0);
+     setAlarm(this, piAutoUpdate);
       Log.d(UPLOAD_SERVICE_TAG, "Auto Update Set");
     }
   }
@@ -192,16 +204,14 @@ public final class UploadService extends Service {
   private void uploadeSession() {
     Log.d(UPLOAD_SERVICE_TAG, "Starting Upload Thread");
     synchronized (this) {
-      if (!running) {
+      if (!running && uploadPossible(uploadTime)) {
         setForegroundService();
         running = true;
 
-        TrackMeHelper.myPreferences = PreferenceManager.getDefaultSharedPreferences(UploadService.this);
-
-        userId = TrackMeHelper.myPreferences.getString("userID", "");
-        passKey = TrackMeHelper.myPreferences.getString("passKey", "");
         Thread t = new UploadThread();
         t.start();
+      } else {
+        running = false;
       }
     }
     Log.d(UPLOAD_SERVICE_TAG, "Upload Complete");
@@ -211,20 +221,20 @@ public final class UploadService extends Service {
     Log.d(UPLOAD_SERVICE_TAG, "Clearing");
     final String selection = TrackMeDBDetails.COLUMN_NAME_TS + " < ?";
     final String[] selectionArgs = { String.valueOf(time) };
-//    final SQLiteDatabase db = myLocationDB.getWritableDatabase();
+    // final SQLiteDatabase db = myLocationDB.getWritableDatabase();
     // SQLiteDatabase db = openOrCreateDatabase(TrackMeDBDetails.DATABASE_NAME,
     // SQLiteDatabase.OPEN_READWRITE, null);
-//    db.delete(TrackMeDBDetails.LOCATION_TABLE_NAME, selection, selectionArgs);
-//    db.close();
+    // db.delete(TrackMeDBDetails.LOCATION_TABLE_NAME, selection,
+    // selectionArgs);
+    // db.close();
     Log.d(UPLOAD_SERVICE_TAG, "Cleared");
   }
 
   private boolean uploadPossible(long uploadTime) {
-    //TODO userDetailsNotNull() and getQueuedLocationsCount(uploadTime) > 0 and isNetworkAvailable()
-    locationCount = db.getQueuedLocationsCount(uploadTime);
-    return myPreference.userDetailsNotNull() &&  locationCount > 0;
-  } 
-  
+    // TODO userDetailsNotNull() and getQueuedLocationsCount(uploadTime) > 0 and
+    // isNetworkAvailable()
+    return myPreference.userDetailsNotNull() && db.getQueuedLocationsCount(uploadTime) > 0;
+  }
 
   @Override
   public void onDestroy() {

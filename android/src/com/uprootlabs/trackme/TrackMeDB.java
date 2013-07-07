@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -71,7 +70,7 @@ final class TrackMeDB {
     }
   }
 
-  private Cursor getLocations(final String selection, final String[] selectionArgs, final String orderBy, final String limit) {
+  public Cursor getLocations(final String selection, final String[] selectionArgs, final String orderBy, final String limit) {
 
     final String[] columns = { TrackMeDBDetails.COLUMN_NAME_SESSION_ID, TrackMeDBDetails.COLUMN_NAME_LAT, TrackMeDBDetails.COLUMN_NAME_LNG,
         TrackMeDBDetails.COLUMN_NAME_ACC, TrackMeDBDetails.COLUMN_NAME_TS, TrackMeDBDetails.COLUMN_NAME_BATCH_ID,
@@ -118,8 +117,12 @@ final class TrackMeDB {
   }
 
   public int getQueuedLocationsCount(long uploadTime) {
-    // TODO the number of locations queued
-    return 0;
+    final String[] columns = { TrackMeDBDetails._ID };
+    Cursor c = db.query(TrackMeDBDetails.LOCATION_TABLE_NAME, columns, TrackMeDBDetails.COLUMN_NAME_TS + "<=" + uploadTime, null, null,
+        null, null, null);
+    int count = c.getCount();
+    c.close();
+    return count;
   }
 
   public void assignUploadID(final int uploadID, final long uploadTime) {
@@ -210,7 +213,9 @@ final class TrackMeDB {
   }
 
   public void clearUploadIDs() {
-    // TODO
+    String sql = "UPDATE " + TrackMeDBDetails.LOCATION_TABLE_NAME + " SET " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + " = null"
+        + " WHERE " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + " != null ";
+    db.execSQL(sql);
   }
 
 }
