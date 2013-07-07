@@ -21,7 +21,6 @@ public final class MainActivity extends Activity {
 
   public static final String MAIN_ACTIVITY_LOCATION_SERVICE_STATUS = "MainActivity/locationServiceStatus";
   private static final String MAIN_ACTIVITY_TAG = "mainActivity";
-  private static final String NOT_SET = "Value not Set!";
 
   // private TextView valueLat;
   // private TextView valueLng;
@@ -39,6 +38,7 @@ public final class MainActivity extends Activity {
 
   private final BroadcastReceiver broadCastReceiverMainActivity = new BroadcastReceiver() {
 
+    @SuppressWarnings("unused")
     @Override
     public void onReceive(final Context context, final Intent intent) {
       final String serviceStatus = intent.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
@@ -46,6 +46,10 @@ public final class MainActivity extends Activity {
       if (serviceStatus.equals(LocationService.STATUS_WARMED_UP)) {
         captureServiceStatus = LocationService.STATUS_WARMED_UP;
         startStopButton.setEnabled(true);
+      } 
+      else if(serviceStatus == null) {
+        captureServiceStatus = null;
+        startStopButton.setEnabled(false);
       }
     }
 
@@ -64,8 +68,7 @@ public final class MainActivity extends Activity {
 
     LocalBroadcastManager.getInstance(this).registerReceiver(broadCastReceiverMainActivity, locationsServiceStatusIntentFilter);
 
-    final Intent intent = new Intent("locationServiceStatus/MainActivity");
-    intent.setAction(LocationService.ACTION_QUERY_STATUS_MAIN_ACTIVITY);
+    final Intent intent = new Intent(LocationService.ACTION_QUERY_STATUS_MAIN_ACTIVITY);
 
     LocalBroadcastManager.getInstance(this).sendBroadcastSync(intent);
 
@@ -140,7 +143,7 @@ public final class MainActivity extends Activity {
 
   private void startServiceWarmUp() {
     final Intent intent = new Intent(this, LocationService.class);
-    intent.setAction("warmUpLocationService/MainActivity");
+    intent.setAction(LocationService.ACTION_WARM_UP_SERVICE);
     startService(intent);
   }
 
@@ -149,11 +152,12 @@ public final class MainActivity extends Activity {
 
       final Intent intent = new Intent(this, UploadService.class);
       intent.putExtra(UploadService.UPLOAD_TYPE, UploadService.AUTO_UPLOAD);
-      long uploadTime = System.currentTimeMillis() + myPreference.getUpdateFrequency();
+      int updateFrequency = myPreference.getUpdateFrequency();
+      long uploadTime = System.currentTimeMillis() + updateFrequency;
       intent.putExtra(UploadService.UPLOAD_TIME, uploadTime);
       if (!UploadService.pendingIntentExists(this, intent)) {
         pi = PendingIntent.getService(this, 0, intent, 0);
-        final long timeOrLengthOfWait = myPreference.getUpdateFrequency();
+        final long timeOrLengthOfWait = updateFrequency;
         final int alarmType = AlarmManager.ELAPSED_REALTIME_WAKEUP;
 
         final AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);

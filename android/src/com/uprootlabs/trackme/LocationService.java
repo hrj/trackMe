@@ -4,16 +4,13 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -31,6 +28,7 @@ public final class LocationService extends Service implements LocationListener, 
   public static final String ACTION_STOP_CAPTURIGN_LOCATIONS = "LocationService/stopCapturing";
   public static final String ACTION_QUERY_STATUS_MAIN_ACTIVITY = "LocationService/queryStatusMainActivity";
   public static final String ACTION_QUERY_STATUS_UPLOAD_SERVICE = "LocationService/queryStatusUploadService";
+  public static final String ACTION_WARM_UP_SERVICE = "warmUpLocationService/MainActivity";
   public static final String ERROR_CAPTURING_LOCATIONS = "errorCapturingLocations";
   public static final String ERROR_STARTING_SERVICE = "errorStartingService";
   public static final String LOCATION_SERVICE_TAG = "locationService";
@@ -43,9 +41,9 @@ public final class LocationService extends Service implements LocationListener, 
   private LocationRequest myLocationRequest;
   private int errorCode;
   private boolean capturingLocations = false;
-//  TrackMeDBHelper myLocationDB = new TrackMeDBHelper(this);
-  SharedPreferences myPreferences;
-//  private TrackMeDB db = new TrackMeDB(myLocationDB.getWritableDatabase());
+  SQLiteDatabase myDb;
+  TrackMeDB db;
+  MyPreference myPreferences;
 
   private final BroadcastReceiver broadCastReceiverLocationService = new BroadcastReceiver() {
 
@@ -83,20 +81,20 @@ public final class LocationService extends Service implements LocationListener, 
 
     LocalBroadcastManager.getInstance(this).registerReceiver(broadCastReceiverLocationService, intentFilter);
 
-
     super.onCreate();
+    myPreferences = new MyPreference(this);
+    myDb = new TrackMeDBHelper(this).getWritableDatabase();
+    db = new TrackMeDB(myDb, this);
     Log.d(LOCATION_SERVICE_TAG, "Service Created");
   }
 
   @Override
   public IBinder onBind(final Intent intent) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public int onStartCommand(final Intent intent, final int flags, final int startId) {
-    myPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     Log.d(LOCATION_SERVICE_TAG, "Service Started");
 
     Log.d(LOCATION_SERVICE_TAG, "warmingUP");
@@ -114,13 +112,13 @@ public final class LocationService extends Service implements LocationListener, 
 
   private void startCapture(final Intent intent) {
     Log.d(LOCATION_SERVICE_TAG, "From startCapture");
-    captureLocations(intent);
-    setForegroundService();
+    if (captureLocations(intent))
+      setForegroundService();
   }
 
-  private void captureLocations(final Intent intent) {
+  private boolean captureLocations(final Intent intent) {
     Log.d(LOCATION_SERVICE_TAG, "From captureLocations");
-    captureFrequency = (Integer.parseInt(myPreferences.getString("captureFrequency", "10"))) * TrackMeHelper.MILLISECONDS_PER_SECOND;
+    captureFrequency = myPreferences.getCaptureFrequency();
     myLocationRequest = LocationRequest.create();
     myLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     myLocationRequest.setInterval(captureFrequency);
@@ -140,6 +138,8 @@ public final class LocationService extends Service implements LocationListener, 
 
       intent.putExtra(PARAM_LOCATION_SERVICE_STATUS, ERROR_CAPTURING_LOCATIONS);
     }
+
+    return capturingLocations;
 
   }
 
@@ -170,6 +170,8 @@ public final class LocationService extends Service implements LocationListener, 
     if (myLocationClient.isConnected())
       myLocationClient.disconnect();
     capturingLocations = false;
+    final Intent mainActivityBroadCastintent = new Intent(MainActivity.MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
+    LocalBroadcastManager.getInstance(this).sendBroadcast(mainActivityBroadCastintent);
     LocalBroadcastManager.getInstance(this).unregisterReceiver(broadCastReceiverLocationService);
     Log.d(LOCATION_SERVICE_TAG, "Destroyed");
   }
@@ -178,7 +180,7 @@ public final class LocationService extends Service implements LocationListener, 
   public void onLocationChanged(final Location location) {
     final long timeStamp = System.currentTimeMillis();
     Log.d(LOCATION_SERVICE_TAG, "Locations Changed");
-//    db.insertLocations(location, timeStamp);
+    db.insertLocations(location, timeStamp);
   }
 
   private boolean servicesConnected() {
@@ -241,7 +243,6 @@ public final class LocationService extends Service implements LocationListener, 
   @Override
   public void onDisconnected() {
     // TODO Auto-generated method stub
-
   }
 
 }

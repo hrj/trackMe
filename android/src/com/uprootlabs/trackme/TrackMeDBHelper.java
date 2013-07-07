@@ -23,7 +23,8 @@ import android.database.sqlite.SQLiteOpenHelper;
       + TrackMeDBDetails._ID + INTEGER_TYPE + " PRIMARY KEY" + COMMA_SEP + TrackMeDBDetails.COLUMN_NAME_SESSION_ID + TEXT_TYPE
       + COMMA_SEP + TrackMeDBDetails.COLUMN_NAME_LAST_BATCH_ID + INTEGER_TYPE + ")";
 
-  private static final String SQL_DELETE_TABLE = "DROP TABLE IF EXISTS " + TrackMeDBDetails.LOCATION_TABLE_NAME;
+  private static final String SQL_DELETE_LOCATION_TABLE = "DROP TABLE IF EXISTS " + TrackMeDBDetails.LOCATION_TABLE_NAME;
+  private static final String SQL_DELETE_SESSION_TABLE = "DROP TABLE IF EXISTS " + TrackMeDBDetails.SESSION_TABLE_NAME;
 
   public TrackMeDBHelper(Context context) {
     super(context, TrackMeDBDetails.DATABASE_NAME, null, TrackMeDBDetails.DB_VERSION);
@@ -35,7 +36,8 @@ import android.database.sqlite.SQLiteOpenHelper;
   }
 
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    db.execSQL(SQL_DELETE_TABLE);
+    db.execSQL(SQL_DELETE_LOCATION_TABLE);
+    db.execSQL(SQL_DELETE_SESSION_TABLE);
     onCreate(db);
   }
 

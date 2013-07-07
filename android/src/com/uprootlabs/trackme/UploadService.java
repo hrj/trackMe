@@ -13,13 +13,12 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.http.AndroidHttpClient;
 import android.os.IBinder;
 import android.os.SystemClock;
-import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 
 public final class UploadService extends Service {
 
@@ -32,11 +31,12 @@ public final class UploadService extends Service {
     public void run() {
       Log.d(UPLOAD_SERVICE_TAG, "Thread Started");
       db.clearUploadIDs();
-      boolean errorExit = false;
+      boolean errorExit;
       do {
         errorExit = false;
         int retryCount = 0;
         int code = -1;
+        HttpResponse response = null;
         String locations = db.getLocationsAsXML(uploadTime);
         final String serverURL = myPreference.getServerLocation();
         final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
@@ -47,24 +47,22 @@ public final class UploadService extends Service {
         while (retryCount < MAX_RETRY_COUNT) {
 
           try {
-            final HttpResponse response = http.execute(httpPost);
+            response = http.execute(httpPost);
             Log.d(UPLOAD_SERVICE_TAG, response.toString());
             code = response.getStatusLine().getStatusCode();
-            http.close();
             errorExit = false;
             retryCount = MAX_RETRY_COUNT;
           } catch (final ClientProtocolException e) {
-            code = -1;
             retryCount += 1;
             errorExit = true;
           } catch (final IOException e) {
             retryCount += 1;
             errorExit = true;
-            code = -1;
             e.printStackTrace();
           }
 
         }
+        http.close();
         if (code == HttpStatus.SC_OK) {
           // db.moveLocations(uploadID, sessions)
         } else if (code == HttpStatus.SC_BAD_REQUEST || code == 500) {
@@ -91,15 +89,9 @@ public final class UploadService extends Service {
   SQLiteDatabase myDb;
   TrackMeDB db;
   MyPreference myPreference;
-  private String sessionDetails = "";
-  private String captureServiceStatus;
   private long uploadTime;
-  private String userId;
-  private String passKey;
-  private int locationCount;
   private PendingIntent piAutoUpdate;
   private boolean running = false;
-  private StringBuffer xyz;
 
   @Override
   public IBinder onBind(final Intent intent) {
@@ -196,7 +188,7 @@ public final class UploadService extends Service {
       long uploadTime = System.currentTimeMillis() + myPreference.getUpdateFrequency();
       intent.putExtra(UPLOAD_TIME, uploadTime);
       piAutoUpdate = PendingIntent.getService(this, 0, intent, 0);
-     setAlarm(this, piAutoUpdate);
+      setAlarm(this, piAutoUpdate);
       Log.d(UPLOAD_SERVICE_TAG, "Auto Update Set");
     }
   }
@@ -217,22 +209,23 @@ public final class UploadService extends Service {
     Log.d(UPLOAD_SERVICE_TAG, "Upload Complete");
   }
 
-  private void clearDB(final long time) {
-    Log.d(UPLOAD_SERVICE_TAG, "Clearing");
-    final String selection = TrackMeDBDetails.COLUMN_NAME_TS + " < ?";
-    final String[] selectionArgs = { String.valueOf(time) };
-    // final SQLiteDatabase db = myLocationDB.getWritableDatabase();
-    // SQLiteDatabase db = openOrCreateDatabase(TrackMeDBDetails.DATABASE_NAME,
-    // SQLiteDatabase.OPEN_READWRITE, null);
-    // db.delete(TrackMeDBDetails.LOCATION_TABLE_NAME, selection,
-    // selectionArgs);
-    // db.close();
-    Log.d(UPLOAD_SERVICE_TAG, "Cleared");
-  }
+  // private void clearDB(final long time) {
+  // Log.d(UPLOAD_SERVICE_TAG, "Clearing");
+  // final String selection = TrackMeDBDetails.COLUMN_NAME_TS + " < ?";
+  // final String[] selectionArgs = { String.valueOf(time) };
+  // final SQLiteDatabase db = myLocationDB.getWritableDatabase();
+  // SQLiteDatabase db = openOrCreateDatabase(TrackMeDBDetails.DATABASE_NAME,
+  // SQLiteDatabase.OPEN_READWRITE, null);
+  // db.delete(TrackMeDBDetails.LOCATION_TABLE_NAME, selection,
+  // selectionArgs);
+  // db.close();
+  // Log.d(UPLOAD_SERVICE_TAG, "Cleared");
+  // }
 
   private boolean uploadPossible(long uploadTime) {
     // TODO userDetailsNotNull() and getQueuedLocationsCount(uploadTime) > 0 and
     // isNetworkAvailable()
+    Toast.makeText(this, "Upload Not Possible", Toast.LENGTH_LONG).show();
     return myPreference.userDetailsNotNull() && db.getQueuedLocationsCount(uploadTime) > 0;
   }
 
