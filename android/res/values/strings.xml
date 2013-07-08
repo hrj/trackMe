@@ -6,33 +6,26 @@
     <string name="title_activity_dialog">DialogActivity</string>
 
     <string name="userid">UserID</string>
-    <string name="key_userid">userID</string>
     <string name="userid_summary">registered email</string>
 
     <string name="passkey">PassKey</string>
-    <string name="key_passkey">passKey</string>
     <string name="passkey_summary">PassKey</string>
 
     <string name="server_location">Server Location</string>
-    <string name="key_server_location">serverLocation</string>
     <string name="server_location_summary">Server to which the locations have to be uploaded, default is the test server</string>
 
     <string name="session_id">Sessoin ID</string>
-    <string name="key_session_id">sessionID</string>
     <string name="session_id_summary">Name assigned for locations captured between start and stop</string>
     <string name="session_id_default">session1</string>
 
     <string name="capture_frequency">Capture Frequency (seconds)</string>
-    <string name="key_capture_frequency">captureFrequency</string>
     <string name="capture_frequency_summary">The frequency at which location data collected</string>
     <string name="capture_frequency_default">10</string>
 
     <string name="auto_update">Auto Update</string>
-    <string name="key_auto_update">autoUpdate</string>
     <string name="auto_update_summary">Upload locations automatically</string>
 
     <string name="update_frequency">Update Frequency (minutes)</string>
-    <string name="key_update_frequency">updateFrequency</string>
     <string name="update_frequency_summary">The rate at which locations have to be uploaded to the server</string>
     <string name="update_frequency_default">15</string>
 
@@ -51,8 +44,5 @@
     <string name="upload">Upload</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-
-    <string name="key_upload_id">uploadID</string>
-    <string name="key_batch_id">batchID</string>
 
 </resources>

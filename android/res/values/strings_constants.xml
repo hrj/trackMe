@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="key_userid">userID</string>
+    <string name="key_passkey">passKey</string>
+    <string name="key_server_location">serverLocation</string>
+    <string name="key_session_id">sessionID</string>
+    <string name="key_capture_frequency">captureFrequency</string>
+    <string name="key_auto_update">autoUpdate</string>
+    <string name="key_update_frequency">updateFrequency</string>
+    <string name="key_upload_id">uploadID</string>
+    <string name="key_batch_id">batchID</string>
+
+</resources>
