@@ -88,6 +88,13 @@ final class TrackMeDB {
     return locationsToXML(sessionLocations, uploadID);
   }
 
+  private String mkString(List<String> arrayString) {
+    StringBuffer batch = new StringBuffer();
+    for(String loc: arrayString){
+      batch.append(loc);
+    }
+    return batch.toString();
+  }
   private String locationsToXML(Map<Tuple, List<String>> sessions, int uploadID) {
     final StringBuffer locationsAsXML = new StringBuffer();
     String userID = myPreferences.getUserID();
@@ -96,8 +103,7 @@ final class TrackMeDB {
     for (Map.Entry<Tuple, List<String>> session : sessions.entrySet()) {
       StringBuffer batch = new StringBuffer();
       Tuple t = session.getKey();
-      // TODO toString does not work
-      String locations = session.getValue().toString();
+      String locations = mkString(session.getValue());
       batch.append("<session sid=\"" + t.getSessionID() + "\" bid=\"" + t.getBatchID() + "\">");
       batch.append(locations);
       batch.append("</session>");
