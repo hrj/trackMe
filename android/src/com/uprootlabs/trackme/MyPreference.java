@@ -75,6 +75,12 @@ public class MyPreference {
     return getSessionID();
   }
 
+  public void setSessoinID(String sessionID) {
+    myPreferencesEditor = myPreferences.edit();
+    myPreferencesEditor.putString(SESSION_ID, sessionID);
+    myPreferencesEditor.commit();
+  }
+
   public int getNewUploadID() {
     int uploadID = myPreferences.getInt(UPLOAD_ID, 0);
     uploadID += 1;

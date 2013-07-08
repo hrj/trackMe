@@ -95,6 +95,7 @@ final class TrackMeDB {
     }
     return batch.toString();
   }
+
   private String locationsToXML(Map<Tuple, List<String>> sessions, int uploadID) {
     final StringBuffer locationsAsXML = new StringBuffer();
     String userID = myPreferences.getUserID();

@@ -2,19 +2,23 @@ package com.uprootlabs.trackme;
 
 import android.app.Activity;
 import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.content.LocalBroadcastManager;
+import android.text.Editable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 public final class MainActivity extends Activity {
@@ -117,22 +121,21 @@ public final class MainActivity extends Activity {
 
   @Override
   public boolean onOptionsItemSelected(final MenuItem item) {
-    //TODO convert into a switch case
-    if (item.getItemId() == R.id.action_settings) {
+    switch (item.getItemId()) {
+
+    case R.id.action_settings:
       final Intent settings = new Intent(this, MyPreferencesActivity.class);
       startActivity(settings);
-    }
+      break;
 
-    if (item.getItemId() == R.id.action_upload) {
+    case R.id.action_upload:
       final Intent intent = new Intent(this, UploadService.class);
       intent.putExtra(UploadService.UPLOAD_TYPE, UploadService.MANUAL_UPLOAD);
       startService(intent);
       Log.d(MAIN_ACTIVITY_TAG, "Upload");
-    }
+      break;
 
-    // case R.id.upload_locations:
-    // getActivity().startActivity(item.getIntent());
-    // break;
+    }
 
     return true;
   }
@@ -194,8 +197,35 @@ public final class MainActivity extends Activity {
   }
 
   public void newSession(final View v) {
-    //TODO Display inputbox to enter new session name
-    Toast.makeText(this, "New Session", Toast.LENGTH_SHORT).show();
+    AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+    alert.setTitle(this.getResources().getString(R.string.new_session_id));
+    alert.setMessage(this.getResources().getString(R.string.label_current_session_id) + myPreference.getSessionID());
+
+    final EditText input = new EditText(this);
+    input.setHint("Enter New SessionID");
+    alert.setView(input);
+
+    alert.setPositiveButton(this.getResources().getString(R.string.ok), new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int whichButton) {
+        Editable value = input.getText();
+        String sessionID = value.toString();
+        if (!sessionID.trim().equals("")) {
+          myPreference.setSessoinID(sessionID);
+          if (captureServiceStatus.equals(LocationService.STATUS_WARMED_UP))
+            startStopCapturing(v);
+        }
+        Toast.makeText(MainActivity.this, "New session started with SessionID : " + myPreference.getSessionID(), Toast.LENGTH_SHORT).show();
+      }
+    });
+
+    alert.setNegativeButton(this.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int whichButton) {
+        Toast.makeText(MainActivity.this, "SessionID changed to " + myPreference.getSessionID(), Toast.LENGTH_SHORT).show();
+      }
+    });
+
+    alert.show();
   }
 
   private void stopCapturingLocations() {
