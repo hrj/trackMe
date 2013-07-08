@@ -31,7 +31,15 @@ public class MyPreference {
   }
 
   public boolean userDetailsNotNull() {
-    if (isNullOrEmpty(getUserID()) || isNullOrEmpty(getPassKey()) || isNullOrEmpty(getServerLocation())) {
+    if (isNullOrEmpty(getUserID()) || isNullOrEmpty(getPassKey())) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  public boolean serverLocationSet() {
+    if (isNullOrEmpty(getServerLocation())) {
       return false;
     } else {
       return true;

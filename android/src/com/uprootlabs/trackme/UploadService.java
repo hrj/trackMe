@@ -212,13 +212,50 @@ public final class UploadService extends Service {
   // }
 
   private boolean uploadPossible(long uploadTime) {
-    return myPreference.userDetailsNotNull() && db.getQueuedLocationsCount(uploadTime) > 0 && isNetworkAvailable();
+    boolean userValidation = myPreference.userDetailsNotNull();
+    boolean serverLocationValidation = myPreference.serverLocationSet();
+    boolean dbValidation = db.getQueuedLocationsCount(uploadTime) > 0;
+    boolean networkValidation = isNetworkAvailable();
+    boolean possible = true;
+    StringBuffer message = new StringBuffer();
+    message.append("Upload not possible due to : ");
+
+    if (!userValidation) {
+      possible = false;
+      message.append("\nUserID or PassKey not provided");
+    }
+
+    if (!serverLocationValidation) {
+      possible = false;
+      message.append("\nServer Location not set");
+    }
+
+    if (!dbValidation) {
+      possible = false;
+      message.append("\nNo locations to upload");
+    }
+
+    if (!networkValidation) {
+      possible = false;
+      message.append("\nNetwoek not available");
+    }
+
+    if (!possible) {
+      final Intent dialogIntent = new Intent(getBaseContext(), DialogActivity.class);
+      dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      dialogIntent.putExtra(DialogActivity.STR_ERROR_TYPE, DialogActivity.STR_ERROR_USER);
+      dialogIntent.putExtra(DialogActivity.STR_ERROR_MESSAGE, message.toString());
+      getApplication().startActivity(dialogIntent);
+    }
+
+    return possible;
   }
 
   private boolean isNetworkAvailable() {
     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-    return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    boolean connected = (activeNetworkInfo != null && activeNetworkInfo.isConnected());
+    return connected;
   }
 
   private boolean userAuthenticated(String userID, String passKey, String serverURL) {
