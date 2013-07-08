@@ -227,26 +227,42 @@ public final class UploadService extends Service {
     httpGet.addHeader("userID", userID);
     httpGet.addHeader("passkey", passKey);
     int code = -1;
+    String message = "";
     try {
       HttpResponse response = http.execute(httpGet);
-      Log.d(UPLOAD_SERVICE_TAG, response.toString());
+      Log.d(UPLOAD_SERVICE_TAG, response.getStatusLine().toString());
       code = response.getStatusLine().getStatusCode();
     } catch (final ClientProtocolException e) {
+      message = "Internet not available";
       Log.d(UPLOAD_SERVICE_TAG, "Service Timeout");
     } catch (final UnknownHostException e) {
+      message = "Server was not known or unreachable";
       Log.d(UPLOAD_SERVICE_TAG, "Unknown Host");
     } catch (IllegalStateException e) {
+      message = "Invalid Server URL";
       Log.d(UPLOAD_SERVICE_TAG, "Illegal");
     } catch (IOException e) {
+      message = "Unknown Error";
       e.printStackTrace();
     }
     http.close();
 
+    final Intent dialogIntent = new Intent(getBaseContext(), DialogActivity.class);
+    dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    dialogIntent.putExtra(DialogActivity.STR_ERROR_TYPE, DialogActivity.STR_ERROR_USER);
+
     if (code == HttpStatus.SC_OK) {
       Log.d(UPLOAD_SERVICE_TAG, "valid");
       return true;
-    } else {
+    } else if (code == -1) {
       Log.d(UPLOAD_SERVICE_TAG, "Invalid" + " " + code);
+      dialogIntent.putExtra(DialogActivity.STR_ERROR_MESSAGE, message);
+      getApplication().startActivity(dialogIntent);
+      return false;
+    } else {
+      message = "Invalid UserID or PassKey";
+      dialogIntent.putExtra(DialogActivity.STR_ERROR_MESSAGE, message);
+      getApplication().startActivity(dialogIntent);
       return false;
     }
   }

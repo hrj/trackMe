@@ -193,7 +193,8 @@ public final class LocationService extends Service implements LocationListener, 
 
       final Intent dialogIntent = new Intent(getBaseContext(), DialogActivity.class);
       dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-      dialogIntent.putExtra("errorCode", errorCode);
+      dialogIntent.putExtra(DialogActivity.STR_ERROR_TYPE, DialogActivity.STR_ERROR_GOOGLE);
+      dialogIntent.putExtra(DialogActivity.STR_ERROR_CODE, errorCode);
       getApplication().startActivity(dialogIntent);
 
       return false;
@@ -226,7 +227,8 @@ public final class LocationService extends Service implements LocationListener, 
 
       final Intent dialogIntent = new Intent(getBaseContext(), DialogActivity.class);
       dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-      dialogIntent.putExtra("errorCode", errorCode);
+      dialogIntent.putExtra(DialogActivity.STR_ERROR_TYPE, DialogActivity.STR_ERROR_GOOGLE);
+      dialogIntent.putExtra(DialogActivity.STR_ERROR_CODE, errorCode);
       getApplication().startActivity(dialogIntent);
 
       stopSelf();
