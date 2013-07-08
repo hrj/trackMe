@@ -139,6 +139,6 @@
         android:layout_alignRight="@+id/startStop"
         android:layout_marginBottom="15dp"
         android:onClick="uploadLocations"
-        android:text="Upload" />
+        android:text="@string/upload"/>
 
 </RelativeLayout>
