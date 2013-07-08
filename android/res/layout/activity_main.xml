@@ -138,7 +138,7 @@
         android:layout_alignLeft="@+id/startStop"
         android:layout_alignRight="@+id/startStop"
         android:layout_marginBottom="15dp"
-        android:onClick="uploadLocations"
-        android:text="@string/upload"/>
+        android:onClick="newSession"
+        android:text="@string/new_session"/>
 
 </RelativeLayout>

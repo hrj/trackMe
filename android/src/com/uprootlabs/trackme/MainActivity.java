@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 public final class MainActivity extends Activity {
 
@@ -25,8 +26,8 @@ public final class MainActivity extends Activity {
   // private TextView valueLng;
   // private TextView valueAccuracy;
   // private TextView valueTimeStamp;
-//  private TextView valueCaptureFrequency;
-//  private TextView valueUpdateFrequency;
+  // private TextView valueCaptureFrequency;
+  // private TextView valueUpdateFrequency;
 
   private Button startStopButton;
 
@@ -45,8 +46,7 @@ public final class MainActivity extends Activity {
       if (serviceStatus.equals(LocationService.STATUS_WARMED_UP)) {
         captureServiceStatus = LocationService.STATUS_WARMED_UP;
         startStopButton.setEnabled(true);
-      } 
-      else if(serviceStatus == null) {
+      } else if (serviceStatus == null) {
         captureServiceStatus = null;
         startStopButton.setEnabled(false);
       }
@@ -59,8 +59,10 @@ public final class MainActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-//    valueCaptureFrequency = (TextView) findViewById(R.id.valueCaptureFrequency);
-//    valueUpdateFrequency = (TextView) findViewById(R.id.valueUpdateFrequency);
+    // valueCaptureFrequency = (TextView)
+    // findViewById(R.id.valueCaptureFrequency);
+    // valueUpdateFrequency = (TextView)
+    // findViewById(R.id.valueUpdateFrequency);
     startStopButton = (Button) findViewById(R.id.startStop);
 
     final IntentFilter locationsServiceStatusIntentFilter = new IntentFilter(MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
@@ -103,8 +105,8 @@ public final class MainActivity extends Activity {
   public void onResume() {
     super.onResume();
 
-//    valueCaptureFrequency.setText(myPreference.getCaptureFrequency());
-//    valueUpdateFrequency.setText(myPreference.getUpdateFrequency());
+    // valueCaptureFrequency.setText(myPreference.getCaptureFrequency());
+    // valueUpdateFrequency.setText(myPreference.getUpdateFrequency());
   }
 
   @Override
@@ -115,9 +117,17 @@ public final class MainActivity extends Activity {
 
   @Override
   public boolean onOptionsItemSelected(final MenuItem item) {
+    //TODO convert into a switch case
     if (item.getItemId() == R.id.action_settings) {
       final Intent settings = new Intent(this, MyPreferencesActivity.class);
       startActivity(settings);
+    }
+
+    if (item.getItemId() == R.id.action_upload) {
+      final Intent intent = new Intent(this, UploadService.class);
+      intent.putExtra(UploadService.UPLOAD_TYPE, UploadService.MANUAL_UPLOAD);
+      startService(intent);
+      Log.d(MAIN_ACTIVITY_TAG, "Upload");
     }
 
     // case R.id.upload_locations:
@@ -183,12 +193,9 @@ public final class MainActivity extends Activity {
 
   }
 
-  public void uploadLocations(final View v) {
-
-    final Intent intent = new Intent(this, UploadService.class);
-    intent.putExtra(UploadService.UPLOAD_TYPE, UploadService.MANUAL_UPLOAD);
-    startService(intent);
-    Log.d(MAIN_ACTIVITY_TAG, "Upload");
+  public void newSession(final View v) {
+    //TODO Display inputbox to enter new session name
+    Toast.makeText(this, "New Session", Toast.LENGTH_SHORT).show();
   }
 
   private void stopCapturingLocations() {

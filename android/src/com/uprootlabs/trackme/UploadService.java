@@ -19,8 +19,8 @@ import android.net.NetworkInfo;
 import android.net.http.AndroidHttpClient;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 public final class UploadService extends Service {
 
@@ -130,46 +130,25 @@ public final class UploadService extends Service {
   @Override
   public int onStartCommand(final Intent intent, final int flags, final int startId) {
 
+    String captureServiceStatus;
     String uploadType = intent.getStringExtra(UPLOAD_TYPE);
+
     if (uploadType.equals(MANUAL_UPLOAD)) {
       uploadTime = System.currentTimeMillis();
     } else if (uploadType.equals(AUTO_UPLOAD)) {
       uploadTime = intent.getLongExtra(UPLOAD_TIME, System.currentTimeMillis());
-      setAutoUpdate();
+
+      final Intent intentStatus = new Intent(LocationService.ACTION_QUERY_STATUS_UPLOAD_SERVICE);
+      LocalBroadcastManager.getInstance(this).sendBroadcastSync(intentStatus);
+
+      captureServiceStatus = intentStatus.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
+      if (captureServiceStatus.equals(LocationService.STATUS_CAPTURING_LOCATIONS)) {
+        setAutoUpdate();
+      }
     }
 
     uploadeSession();
 
-    // if (userId.equals("") || passKey.equals("")) {
-    // Log.d(UPLOAD_SERVICE_TAG, "Empty UserID or PassKey")
-    // Toast.makeText(this, "Empty UserID or PassKey",
-    // Toast.LENGTH_LONG).show();
-    // } else {
-    //
-    // Log.d(UPLOAD_SERVICE_TAG, "Upload Service Started");
-    //
-    // uploadeSession();
-    // // Logic to check condition for next alarm
-    // final Intent intentStatus = new
-    // Intent(LocationService.ACTION_QUERY_STATUS_UPLOAD_SERVICE);
-    // LocalBroadcastManager.getInstance(this).sendBroadcastSync(intentStatus);
-    //
-    // captureServiceStatus =
-    // intentStatus.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
-    // Log.d(UPLOAD_SERVICE_TAG, captureServiceStatus + " " + "Status");
-    //
-    // final boolean autoUpdate =
-    // TrackMeHelper.myPreferences.getBoolean("autoUpdate", false);
-    // boolean captureLocations = false;
-    // if
-    // (captureServiceStatus.equals(LocationService.STATUS_CAPTURING_LOCATIONS))
-    // {
-    // captureLocations = true;
-    // }
-    // Log.d(UPLOAD_SERVICE_TAG, "autoupdate" + autoUpdate + " " + "Capture" +
-    // captureLocations);
-    // setAutoUpload(autoUpdate, captureLocations);
-    // }
     Log.d(UPLOAD_SERVICE_TAG, "exiting service");
     return Service.START_NOT_STICKY;
   }
@@ -225,8 +204,6 @@ public final class UploadService extends Service {
   // }
 
   private boolean uploadPossible(long uploadTime) {
-    // TODO userDetailsNotNull() and getQueuedLocationsCount(uploadTime) > 0 and
-    // isNetworkAvailable()
     return myPreference.userDetailsNotNull() && db.getQueuedLocationsCount(uploadTime) > 0 && isNetworkAvailable();
   }
 

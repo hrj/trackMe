@@ -184,6 +184,7 @@ containing a value of this type.
     public static final class id {
         public static final int accuracy=0x7f06000a;
         public static final int action_settings=0x7f060013;
+        public static final int action_upload=0x7f060014;
         public static final int hybrid=0x7f060004;
         public static final int labelAccuracy=0x7f060009;
         public static final int labelCaptureFrequency=0x7f06000d;
