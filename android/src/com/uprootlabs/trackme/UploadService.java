@@ -46,7 +46,7 @@ public final class UploadService extends Service {
           int retryCount = 0;
           int code = -1;
           HttpResponse response = null;
-          String locations = db.getLocationsAsXML(uploadTime);
+          final String locations = db.getLocationsAsXML(uploadTime);
           Log.d(UPLOAD_SERVICE_TAG, locations);
           final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
           final HttpPost httpPost = new HttpPost(serverURL);
@@ -122,10 +122,6 @@ public final class UploadService extends Service {
     alarmManager.set(alarmType, SystemClock.elapsedRealtime() + timeOrLengthOfWait, pi);
   }
 
-  public static void updateAlarm(final Context context) {
-
-  }
-
   @Override
   public void onCreate() {
     super.onCreate();
@@ -139,7 +135,7 @@ public final class UploadService extends Service {
   public int onStartCommand(final Intent intent, final int flags, final int startId) {
 
     String captureServiceStatus;
-    String uploadType = intent.getStringExtra(UPLOAD_TYPE);
+    final String uploadType = intent.getStringExtra(UPLOAD_TYPE);
 
     if (uploadType.equals(MANUAL_UPLOAD)) {
       uploadTime = System.currentTimeMillis();
@@ -172,9 +168,9 @@ public final class UploadService extends Service {
 
   private void setAutoUpdate() {
     if (myPreference.isAutoUpdateSet() && running) {
-      Intent intent = new Intent(this, UploadService.class);
+      final Intent intent = new Intent(this, UploadService.class);
       intent.putExtra(UPLOAD_TYPE, AUTO_UPLOAD);
-      long uploadTime = System.currentTimeMillis() + myPreference.getUpdateFrequency();
+      final long uploadTime = System.currentTimeMillis() + myPreference.getUpdateFrequency();
       intent.putExtra(UPLOAD_TIME, uploadTime);
       piAutoUpdate = PendingIntent.getService(this, 0, intent, 0);
       setAlarm(this, piAutoUpdate);
@@ -189,7 +185,7 @@ public final class UploadService extends Service {
         setForegroundService();
         running = true;
 
-        Thread t = new UploadThread();
+        final Thread t = new UploadThread();
         t.start();
       } else {
         running = false;
@@ -211,13 +207,13 @@ public final class UploadService extends Service {
   // Log.d(UPLOAD_SERVICE_TAG, "Cleared");
   // }
 
-  private boolean uploadPossible(long uploadTime) {
-    boolean userValidation = myPreference.userDetailsNotNull();
-    boolean serverLocationValidation = myPreference.serverLocationSet();
-    boolean dbValidation = db.getQueuedLocationsCount(uploadTime) > 0;
-    boolean networkValidation = isNetworkAvailable();
+  private boolean uploadPossible(final long uploadTime) {
+    final boolean userValidation = myPreference.userDetailsNotNull();
+    final boolean serverLocationValidation = myPreference.serverLocationSet();
+    final boolean dbValidation = db.getQueuedLocationsCount(uploadTime) > 0;
+    final boolean networkValidation = isNetworkAvailable();
     boolean possible = true;
-    StringBuffer message = new StringBuffer();
+    final StringBuffer message = new StringBuffer();
     message.append("Upload not possible due to : ");
 
     if (!userValidation) {
@@ -252,13 +248,13 @@ public final class UploadService extends Service {
   }
 
   private boolean isNetworkAvailable() {
-    ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-    boolean connected = (activeNetworkInfo != null && activeNetworkInfo.isConnected());
+    final ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+    final NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+    final boolean connected = (activeNetworkInfo != null && activeNetworkInfo.isConnected());
     return connected;
   }
 
-  private boolean userAuthenticated(String userID, String passKey, String serverURL) {
+  private boolean userAuthenticated(final String userID, final String passKey, final String serverURL) {
     final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
     final HttpGet httpGet = new HttpGet(serverURL);
     httpGet.addHeader("userID", userID);
@@ -266,7 +262,7 @@ public final class UploadService extends Service {
     int code = -1;
     String message = "";
     try {
-      HttpResponse response = http.execute(httpGet);
+      final HttpResponse response = http.execute(httpGet);
       Log.d(UPLOAD_SERVICE_TAG, response.getStatusLine().toString());
       code = response.getStatusLine().getStatusCode();
     } catch (final ClientProtocolException e) {
@@ -275,10 +271,10 @@ public final class UploadService extends Service {
     } catch (final UnknownHostException e) {
       message = "Server was not known or unreachable";
       Log.d(UPLOAD_SERVICE_TAG, "Unknown Host");
-    } catch (IllegalStateException e) {
+    } catch (final IllegalStateException e) {
       message = "Invalid Server URL";
       Log.d(UPLOAD_SERVICE_TAG, "Illegal");
-    } catch (IOException e) {
+    } catch (final IOException e) {
       message = "Unknown Error";
       e.printStackTrace();
     }

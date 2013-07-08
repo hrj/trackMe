@@ -18,7 +18,7 @@ public class MyPreference {
   private final String UPLOAD_ID;
   private final String NOT_SET = "";
 
-  public MyPreference(Context context) {
+  public MyPreference(final Context context) {
     myPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     USER_ID = context.getResources().getString(R.string.key_userid);
     PASSKEY = context.getResources().getString(R.string.key_passkey);
@@ -46,7 +46,7 @@ public class MyPreference {
     }
   }
   
-  private boolean isNullOrEmpty(String string) {
+  private boolean isNullOrEmpty(final String string) {
     return string.trim().equals("");
   }
 
@@ -83,7 +83,7 @@ public class MyPreference {
     return getSessionID();
   }
 
-  public void setSessoinID(String sessionID) {
+  public void setSessoinID(final String sessionID) {
     myPreferencesEditor = myPreferences.edit();
     myPreferencesEditor.putString(SESSION_ID, sessionID);
     myPreferencesEditor.commit();

@@ -11,11 +11,11 @@ public class OnBoot extends BroadcastReceiver {
   TrackMeDB db;
 
   @Override
-  public void onReceive(Context context, Intent intent) {
+  public void onReceive(final Context context, final Intent intent) {
     myDb = new TrackMeDBHelper(context).getWritableDatabase();
     db = new TrackMeDB(myDb, context);
     myPreference = new MyPreference(context);
-    long uploadTime = System.currentTimeMillis();
+    final long uploadTime = System.currentTimeMillis();
     if (myPreference.isAutoUpdateSet() && db.getQueuedLocationsCount(uploadTime) > 0) {
       final Intent intentNew = new Intent(context, UploadService.class);
       intentNew.putExtra(UploadService.UPLOAD_TYPE, UploadService.AUTO_UPLOAD);

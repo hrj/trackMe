@@ -22,10 +22,10 @@ final class GzipHelper {
 	     * @return
 	     * @throws IOException
 	     */
-	    public static String streamToString(InputStream content) throws IOException {
-	        byte[] buffer = new byte[1024];
+	    public static String streamToString(final InputStream content) throws IOException {
+	        final byte[] buffer = new byte[1024];
 	        int numRead = 0;
-	        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
 	        while ((numRead = content.read(buffer)) != -1) {
 	            baos.write(buffer, 0, numRead);
@@ -36,10 +36,10 @@ final class GzipHelper {
 	        return new String(baos.toByteArray());
 	    }
 
-	    public static void setEntity(String content, HttpPost postReq) {
+	    public static void setEntity(final String content, final HttpPost postReq) {
 	      try {
 	        postReq.setEntity(new StringEntity(content));
-	      } catch (UnsupportedEncodingException e) {
+	      } catch (final UnsupportedEncodingException e) {
 	        // TODO Auto-generated catch block
 	        e.printStackTrace();
 	      }
@@ -54,9 +54,9 @@ final class GzipHelper {
 	     * 
 	     */
 
-	    public static void setCompressedEntity(Context context, String content, HttpPost postReq) {
+	    public static void setCompressedEntity(final Context context, final String content, final HttpPost postReq) {
 	        try {
-	            byte[] data = content.getBytes("UTF-8");
+	            final byte[] data = content.getBytes("UTF-8");
 
 
 	            // if the length of the data exceeds the minimum gzip size then only
@@ -74,9 +74,9 @@ final class GzipHelper {
 	            postReq.setEntity(AndroidHttpClient.getCompressedEntity(data, context.getContentResolver()));
 
 
-	        } catch (UnsupportedEncodingException e) {
+	        } catch (final UnsupportedEncodingException e) {
 	            e.printStackTrace();
-	        } catch (IOException e) {
+	        } catch (final IOException e) {
 	            e.printStackTrace();
 	        }
 	    }
@@ -93,14 +93,14 @@ final class GzipHelper {
 	     *                   HttpResponse Object
 	     * @return String content of the HttpResponse
 	     */
-	    public static String getIfCompressed(HttpResponse response) {
+	    public static String getIfCompressed(final HttpResponse response) {
 	        if (response == null)
 	            return null;
 
 	        try {
-	            InputStream is = AndroidHttpClient.getUngzippedContent(response.getEntity());
+	            final InputStream is = AndroidHttpClient.getUngzippedContent(response.getEntity());
 	            return streamToString(is);
-	        } catch (IOException e) {
+	        } catch (final IOException e) {
 	            e.printStackTrace();
 	        }
 

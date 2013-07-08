@@ -180,7 +180,7 @@ public final class LocationService extends Service implements LocationListener, 
   public void onLocationChanged(final Location location) {
     final long timeStamp = System.currentTimeMillis();
     Log.d(LOCATION_SERVICE_TAG, "Locations Changed");
-    db.insertLocations(location, timeStamp);
+    db.insertNewLocations(location, timeStamp);
   }
 
   private boolean servicesConnected() {
@@ -244,7 +244,6 @@ public final class LocationService extends Service implements LocationListener, 
 
   @Override
   public void onDisconnected() {
-    // TODO Auto-generated method stub
   }
 
 }

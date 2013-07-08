@@ -140,7 +140,7 @@ public final class MainActivity extends Activity {
     return true;
   }
 
-  public void startStopCapturing(final View v) {
+  public void onClickStartStop(final View v) {
     Log.d(MAIN_ACTIVITY_TAG, "Start/Stop");
 
     Log.d(MAIN_ACTIVITY_TAG, captureServiceStatus + " " + "Service Status");
@@ -164,8 +164,8 @@ public final class MainActivity extends Activity {
 
       final Intent intent = new Intent(this, UploadService.class);
       intent.putExtra(UploadService.UPLOAD_TYPE, UploadService.AUTO_UPLOAD);
-      int updateFrequency = myPreference.getUpdateFrequency();
-      long uploadTime = System.currentTimeMillis() + updateFrequency;
+      final int updateFrequency = myPreference.getUpdateFrequency();
+      final long uploadTime = System.currentTimeMillis() + updateFrequency;
       intent.putExtra(UploadService.UPLOAD_TIME, uploadTime);
       if (!UploadService.pendingIntentExists(this, intent)) {
         pi = PendingIntent.getService(this, 0, intent, 0);
@@ -196,8 +196,8 @@ public final class MainActivity extends Activity {
 
   }
 
-  public void newSession(final View v) {
-    AlertDialog.Builder alert = new AlertDialog.Builder(this);
+  public void onClickNewSession(final View v) {
+    final AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
     alert.setTitle(this.getResources().getString(R.string.new_session_id));
     alert.setMessage(this.getResources().getString(R.string.label_current_session_id) + myPreference.getSessionID());
@@ -207,20 +207,20 @@ public final class MainActivity extends Activity {
     alert.setView(input);
 
     alert.setPositiveButton(this.getResources().getString(R.string.ok), new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int whichButton) {
-        Editable value = input.getText();
-        String sessionID = value.toString();
+      public void onClick(final DialogInterface dialog, final int whichButton) {
+        final Editable value = input.getText();
+        final String sessionID = value.toString();
         if (!sessionID.trim().equals("")) {
           myPreference.setSessoinID(sessionID);
           if (captureServiceStatus.equals(LocationService.STATUS_WARMED_UP))
-            startStopCapturing(v);
+            onClickStartStop(v);
         }
         Toast.makeText(MainActivity.this, "New session started with SessionID : " + myPreference.getSessionID(), Toast.LENGTH_SHORT).show();
       }
     });
 
     alert.setNegativeButton(this.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int whichButton) {
+      public void onClick(final DialogInterface dialog, final int whichButton) {
         Toast.makeText(MainActivity.this, "SessionID changed to " + myPreference.getSessionID(), Toast.LENGTH_SHORT).show();
       }
     });

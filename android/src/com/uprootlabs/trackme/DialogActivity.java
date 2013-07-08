@@ -24,8 +24,7 @@ public class DialogActivity extends Activity {
   DialogInterface.OnDismissListener dismissListener = new DialogInterface.OnDismissListener() {
 
     @Override
-    public void onDismiss(DialogInterface dialog) {
-      // TODO Auto-generated method stub
+    public void onDismiss(final DialogInterface dialog) {
       finish();
     }
 
@@ -34,8 +33,7 @@ public class DialogActivity extends Activity {
   DialogInterface.OnClickListener clickListener = new DialogInterface.OnClickListener() {
 
     @Override
-    public void onClick(DialogInterface dialog, int which) {
-      // TODO Auto-generated method stub
+    public void onClick(final DialogInterface dialog, final int which) {
       Log.d(DIALOG_ACTIVITY_TAG, "Dialog Cloased OK");
       finish();
     }
@@ -43,34 +41,29 @@ public class DialogActivity extends Activity {
   };
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected void onCreate(final Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     // setContentView(R.layout.activity_dialog);
     this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-    Intent intent = getIntent();
-    String errorType = intent.getStringExtra(STR_ERROR_TYPE);
+    final Intent intent = getIntent();
+    final String errorType = intent.getStringExtra(STR_ERROR_TYPE);
     if (errorType.equals(STR_ERROR_GOOGLE)) {
-      int resultCode = intent.getIntExtra(STR_ERROR_CODE, 0);
-      Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(resultCode, this, CONNECTION_FAILURE_RESOLUTION_REQEUST);
+      final int resultCode = intent.getIntExtra(STR_ERROR_CODE, 0);
+      final Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(resultCode, this, CONNECTION_FAILURE_RESOLUTION_REQEUST);
       if (errorDialog != null) {
         errorDialog.setOnDismissListener(dismissListener);
         errorDialog.show();
       }
     } else {
-      String errorMessage = intent.getStringExtra(STR_ERROR_MESSAGE);
-      AlertDialog.Builder errorDialog = new AlertDialog.Builder(this);
+      final String errorMessage = intent.getStringExtra(STR_ERROR_MESSAGE);
+      final AlertDialog.Builder errorDialog = new AlertDialog.Builder(this);
       errorDialog.setTitle("Error");
       errorDialog.setMessage(errorMessage);
       errorDialog.setNeutralButton(this.getResources().getString(R.string.ok), clickListener);
       errorDialog.show();
     }
 
-  }
-
-  @Override
-  public void onResume() {
-    super.onResume();
   }
 
   @Override

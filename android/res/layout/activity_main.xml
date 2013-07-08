@@ -126,7 +126,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:onClick="startStopCapturing"
+        android:onClick="onClickStartStop"
         android:enabled="false"
         android:text="@string/start_capturing" />
 
@@ -138,7 +138,7 @@
         android:layout_alignLeft="@+id/startStop"
         android:layout_alignRight="@+id/startStop"
         android:layout_marginBottom="15dp"
-        android:onClick="newSession"
+        android:onClick="onClickNewSession"
         android:text="@string/new_session"/>
 
 </RelativeLayout>

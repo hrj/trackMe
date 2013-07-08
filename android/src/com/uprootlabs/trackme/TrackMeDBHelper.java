@@ -26,22 +26,22 @@ import android.database.sqlite.SQLiteOpenHelper;
   private static final String SQL_DELETE_LOCATION_TABLE = "DROP TABLE IF EXISTS " + TrackMeDBDetails.LOCATION_TABLE_NAME;
   private static final String SQL_DELETE_SESSION_TABLE = "DROP TABLE IF EXISTS " + TrackMeDBDetails.SESSION_TABLE_NAME;
 
-  public TrackMeDBHelper(Context context) {
+  public TrackMeDBHelper(final Context context) {
     super(context, TrackMeDBDetails.DATABASE_NAME, null, TrackMeDBDetails.DB_VERSION);
   }
 
-  public void onCreate(SQLiteDatabase db) {
+  public void onCreate(final SQLiteDatabase db) {
     db.execSQL(SQL_CREATE_LOCATION_TABLE);
     db.execSQL(SQL_CREATE_SESSION_TABLE);
   }
 
-  public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+  public void onUpgrade(final SQLiteDatabase db, final int oldVersion, final int newVersion) {
     db.execSQL(SQL_DELETE_LOCATION_TABLE);
     db.execSQL(SQL_DELETE_SESSION_TABLE);
     onCreate(db);
   }
 
-  public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+  public void onDowngrade(final SQLiteDatabase db, final int oldVersion, final int newVersion) {
     onUpgrade(db, oldVersion, newVersion);
   }
 
