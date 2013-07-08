@@ -14,6 +14,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.http.AndroidHttpClient;
 import android.os.IBinder;
 import android.os.SystemClock;
@@ -225,8 +227,13 @@ public final class UploadService extends Service {
   private boolean uploadPossible(long uploadTime) {
     // TODO userDetailsNotNull() and getQueuedLocationsCount(uploadTime) > 0 and
     // isNetworkAvailable()
-    Toast.makeText(this, "Upload Not Possible", Toast.LENGTH_LONG).show();
-    return myPreference.userDetailsNotNull() && db.getQueuedLocationsCount(uploadTime) > 0;
+    return myPreference.userDetailsNotNull() && db.getQueuedLocationsCount(uploadTime) > 0 && isNetworkAvailable();
+  }
+
+  private boolean isNetworkAvailable() {
+    ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+    return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
 
   @Override
