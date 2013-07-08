@@ -1,10 +1,12 @@
 package com.uprootlabs.trackme;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 
 import android.app.AlarmManager;
@@ -32,46 +34,52 @@ public final class UploadService extends Service {
     @Override
     public void run() {
       Log.d(UPLOAD_SERVICE_TAG, "Thread Started");
-      db.clearUploadIDs();
-      boolean errorExit;
-      do {
-        errorExit = false;
-        int retryCount = 0;
-        int code = -1;
-        HttpResponse response = null;
-        String locations = db.getLocationsAsXML(uploadTime);
-        Log.d(UPLOAD_SERVICE_TAG, locations);
-        final String serverURL = myPreference.getServerLocation();
-        final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
-        final HttpPost httpPost = new HttpPost(serverURL);
-        GzipHelper.setCompressedEntity(UploadService.this, locations, httpPost);
-        httpPost.addHeader("userID", myPreference.getUserID());
-        httpPost.addHeader("passkey", myPreference.getPassKey());
-        while (retryCount < MAX_RETRY_COUNT) {
+      final String serverURL = myPreference.getServerLocation();
+      final String userID = myPreference.getUserID();
+      final String passKey = myPreference.getPassKey();
+      if (userAuthenticated(userID, passKey, serverURL)) {
 
-          try {
-            response = http.execute(httpPost);
-            Log.d(UPLOAD_SERVICE_TAG, response.toString());
-            code = response.getStatusLine().getStatusCode();
-            errorExit = false;
-            retryCount = MAX_RETRY_COUNT;
-          } catch (final ClientProtocolException e) {
-            retryCount += 1;
-            errorExit = true;
-          } catch (final IOException e) {
-            retryCount += 1;
-            errorExit = true;
-            e.printStackTrace();
+        db.clearUploadIDs();
+        boolean errorExit;
+        do {
+          errorExit = false;
+          int retryCount = 0;
+          int code = -1;
+          HttpResponse response = null;
+          String locations = db.getLocationsAsXML(uploadTime);
+          Log.d(UPLOAD_SERVICE_TAG, locations);
+          final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
+          final HttpPost httpPost = new HttpPost(serverURL);
+          GzipHelper.setCompressedEntity(UploadService.this, locations, httpPost);
+          httpPost.addHeader("userID", userID);
+          httpPost.addHeader("passkey", passKey);
+          while (retryCount < MAX_RETRY_COUNT) {
+
+            try {
+              response = http.execute(httpPost);
+              Log.d(UPLOAD_SERVICE_TAG, response.toString());
+              code = response.getStatusLine().getStatusCode();
+              errorExit = false;
+              retryCount = MAX_RETRY_COUNT;
+            } catch (final ClientProtocolException e) {
+              retryCount += 1;
+              errorExit = true;
+            } catch (final IOException e) {
+              retryCount += 1;
+              errorExit = true;
+              e.printStackTrace();
+            }
+
           }
+          http.close();
+          if (code == HttpStatus.SC_OK) {
+            // db.moveLocations(uploadID, sessions)
+          } else if (code == HttpStatus.SC_BAD_REQUEST || code == 500) {
 
-        }
-        http.close();
-        if (code == HttpStatus.SC_OK) {
-          // db.moveLocations(uploadID, sessions)
-        } else if (code == HttpStatus.SC_BAD_REQUEST || code == 500) {
+          }
+        } while (db.getQueuedLocationsCount(uploadTime) > 0 && !errorExit);
 
-        }
-      } while (db.getQueuedLocationsCount(uploadTime) > 0 && !errorExit);
+      }
 
       synchronized (UploadService.this) {
         running = false;
@@ -211,6 +219,36 @@ public final class UploadService extends Service {
     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+  }
+
+  private boolean userAuthenticated(String userID, String passKey, String serverURL) {
+    final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
+    final HttpGet httpGet = new HttpGet(serverURL);
+    httpGet.addHeader("userID", userID);
+    httpGet.addHeader("passkey", passKey);
+    int code = -1;
+    try {
+      HttpResponse response = http.execute(httpGet);
+      Log.d(UPLOAD_SERVICE_TAG, response.toString());
+      code = response.getStatusLine().getStatusCode();
+    } catch (final ClientProtocolException e) {
+      Log.d(UPLOAD_SERVICE_TAG, "Service Timeout");
+    } catch (final UnknownHostException e) {
+      Log.d(UPLOAD_SERVICE_TAG, "Unknown Host");
+    } catch (IllegalStateException e) {
+      Log.d(UPLOAD_SERVICE_TAG, "Illegal");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    http.close();
+
+    if (code == HttpStatus.SC_OK) {
+      Log.d(UPLOAD_SERVICE_TAG, "valid");
+      return true;
+    } else {
+      Log.d(UPLOAD_SERVICE_TAG, "Invalid" + " " + code);
+      return false;
+    }
   }
 
   @Override
