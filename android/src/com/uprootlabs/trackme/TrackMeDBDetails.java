@@ -3,8 +3,9 @@ package com.uprootlabs.trackme;
 import android.provider.BaseColumns;
 
 final class TrackMeDBDetails implements BaseColumns {
-  public static final String LOCATION_TABLE_NAME = "locationDetails";
-  public static final String SESSION_TABLE_NAME = "sessionDetails";
+  public static final String TABLE_LOCATIONS = "locationDetails";
+  public static final String TABLE_SESSION = "sessionDetails";
+  public static final String TABLE_ARCHIVED_LOCATIONS = "arcivedLocations";
   public static final String COLUMN_NAME_SESSION_ID = "sessionId";
   public static final String COLUMN_NAME_BATCH_ID = "batchId";
   public static final String COLUMN_NAME_UPLOAD_ID = "uploadId";

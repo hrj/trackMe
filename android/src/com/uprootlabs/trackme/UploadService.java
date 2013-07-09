@@ -8,6 +8,9 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -72,10 +75,30 @@ public final class UploadService extends Service {
 
           }
           http.close();
-          if (code == HttpStatus.SC_OK) {
-            // db.moveLocations(uploadID, sessions)
-          } else if (code == HttpStatus.SC_BAD_REQUEST || code == 500) {
 
+          if (code == HttpStatus.SC_OK) {
+            final Document doc = ResponseParsing.getDomElement(ResponseParsing.getXML(response));
+
+            final int uploadID = Integer.parseInt(doc.getDocumentElement().getAttribute("id"));
+
+            final NodeList nl = doc.getElementsByTagName("batch");
+
+            for (int i = 0; i < nl.getLength(); i++) {
+              final Element e = (Element) nl.item(i);
+              final String sessionID = e.getAttribute("sid");
+              final int batchID = Integer.parseInt(e.getAttribute("bid"));
+
+              if (Boolean.getBoolean(e.getAttribute("accepted"))) {
+                db.moveLocationsToSessionTable(uploadID, sessionID, batchID);
+              } else {
+                db.archiveLocations(uploadID, sessionID, batchID);
+              }
+
+            }
+          } else {
+            final String message = "Server response:\n" + response.getStatusLine().getReasonPhrase();
+            getApplication().startActivity(UserError.makeIntent(getBaseContext(), message));
+            errorExit = true;
           }
         } while (db.getQueuedLocationsCount(uploadTime) > 0 && !errorExit);
 
@@ -194,19 +217,6 @@ public final class UploadService extends Service {
     Log.d(UPLOAD_SERVICE_TAG, "Upload Complete");
   }
 
-  // private void clearDB(final long time) {
-  // Log.d(UPLOAD_SERVICE_TAG, "Clearing");
-  // final String selection = TrackMeDBDetails.COLUMN_NAME_TS + " < ?";
-  // final String[] selectionArgs = { String.valueOf(time) };
-  // final SQLiteDatabase db = myLocationDB.getWritableDatabase();
-  // SQLiteDatabase db = openOrCreateDatabase(TrackMeDBDetails.DATABASE_NAME,
-  // SQLiteDatabase.OPEN_READWRITE, null);
-  // db.delete(TrackMeDBDetails.LOCATION_TABLE_NAME, selection,
-  // selectionArgs);
-  // db.close();
-  // Log.d(UPLOAD_SERVICE_TAG, "Cleared");
-  // }
-
   private boolean uploadPossible(final long uploadTime) {
     final boolean userValidation = myPreference.userDetailsNotNull();
     final boolean serverLocationValidation = myPreference.serverLocationSet();
@@ -237,11 +247,7 @@ public final class UploadService extends Service {
     }
 
     if (!possible) {
-      final Intent dialogIntent = new Intent(getBaseContext(), DialogActivity.class);
-      dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-      dialogIntent.putExtra(DialogActivity.STR_ERROR_TYPE, DialogActivity.STR_ERROR_USER);
-      dialogIntent.putExtra(DialogActivity.STR_ERROR_MESSAGE, message.toString());
-      getApplication().startActivity(dialogIntent);
+      getApplication().startActivity(UserError.makeIntent(getBaseContext(), message.toString()));
     }
 
     return possible;
@@ -280,22 +286,17 @@ public final class UploadService extends Service {
     }
     http.close();
 
-    final Intent dialogIntent = new Intent(getBaseContext(), DialogActivity.class);
-    dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-    dialogIntent.putExtra(DialogActivity.STR_ERROR_TYPE, DialogActivity.STR_ERROR_USER);
 
     if (code == HttpStatus.SC_OK) {
       Log.d(UPLOAD_SERVICE_TAG, "valid");
       return true;
     } else if (code == -1) {
       Log.d(UPLOAD_SERVICE_TAG, "Invalid" + " " + code);
-      dialogIntent.putExtra(DialogActivity.STR_ERROR_MESSAGE, message);
-      getApplication().startActivity(dialogIntent);
+      getApplication().startActivity(UserError.makeIntent(getBaseContext(), message));
       return false;
     } else {
       message = "Invalid UserID or PassKey";
-      dialogIntent.putExtra(DialogActivity.STR_ERROR_MESSAGE, message);
-      getApplication().startActivity(dialogIntent);
+      getApplication().startActivity(UserError.makeIntent(getBaseContext(), message));
       return false;
     }
   }

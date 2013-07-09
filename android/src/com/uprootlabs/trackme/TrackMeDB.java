@@ -15,41 +15,6 @@ final class TrackMeDB {
   private final SQLiteDatabase db;
   private final MyPreference myPreferences;
 
-  private class SessionBatchTuple {
-    final private String sessionID;
-    final private int batchID;
-
-    public SessionBatchTuple(final String sessionID, final int batchID) {
-      this.sessionID = sessionID;
-      this.batchID = batchID;
-    }
-
-    private String getSessionID() {
-      return sessionID;
-    }
-
-    private int getBatchID() {
-      return batchID;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-      try {
-        final SessionBatchTuple that = (SessionBatchTuple) obj;
-        return (that.sessionID.equals(sessionID) && that.batchID == batchID);
-      } catch (ClassCastException e) {
-        e.printStackTrace();
-        return false;
-      }
-    }
-
-  }
-
   public TrackMeDB(final SQLiteDatabase db, final Context context) {
     this.db = db;
     myPreferences = new MyPreference(context);
@@ -69,7 +34,7 @@ final class TrackMeDB {
       values.put(TrackMeDBDetails.COLUMN_NAME_ACC, acc);
       values.put(TrackMeDBDetails.COLUMN_NAME_TS, timeStamp);
 
-      db.insert(TrackMeDBDetails.LOCATION_TABLE_NAME, null, values);
+      db.insert(TrackMeDBDetails.TABLE_LOCATIONS, null, values);
       return true;
     } else {
       return false;
@@ -84,7 +49,7 @@ final class TrackMeDB {
   // TrackMeDBDetails.COLUMN_NAME_ACC, TrackMeDBDetails.COLUMN_NAME_TS,
   // TrackMeDBDetails.COLUMN_NAME_BATCH_ID,
   // TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID };
-  // Cursor c = db.query(TrackMeDBDetails.LOCATION_TABLE_NAME, columns,
+  // Cursor c = db.query(TrackMeDBDetails.TABLE_LOCATIONS, columns,
   // selection, selectionArgs, null, null, orderBy, limit);
   // return c;
   // }
@@ -128,26 +93,26 @@ final class TrackMeDB {
     final String[] columns = { TrackMeDBDetails.COLUMN_NAME_SESSION_ID, TrackMeDBDetails.COLUMN_NAME_LAT, TrackMeDBDetails.COLUMN_NAME_LNG,
         TrackMeDBDetails.COLUMN_NAME_ACC, TrackMeDBDetails.COLUMN_NAME_TS, TrackMeDBDetails.COLUMN_NAME_BATCH_ID,
         TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID };
-    final Cursor c = db.query(TrackMeDBDetails.LOCATION_TABLE_NAME, columns, TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + "=" + uploadID, null,
+    final Cursor c = db.query(TrackMeDBDetails.TABLE_LOCATIONS, columns, TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + "=" + uploadID, null,
         null, null, TrackMeDBDetails.COLUMN_NAME_TS + " ASC", TrackMeDBDetails.LOCATIONS_QUERY_LIMIT);
     return c;
   }
 
   public int getQueuedLocationsCount(final long uploadTime) {
     final String[] columns = { TrackMeDBDetails._ID };
-    final Cursor c = db.query(TrackMeDBDetails.LOCATION_TABLE_NAME, columns, TrackMeDBDetails.COLUMN_NAME_TS + "<=" + uploadTime, null,
-        null, null, null, null);
+    final Cursor c = db.query(TrackMeDBDetails.TABLE_LOCATIONS, columns, TrackMeDBDetails.COLUMN_NAME_TS + "<=" + uploadTime, null, null,
+        null, null, null);
     final int count = c.getCount();
     c.close();
     return count;
   }
 
   public void assignUploadID(final int uploadID, final long uploadTime) {
-    final String select = "SELECT " + TrackMeDBDetails._ID + " FROM " + TrackMeDBDetails.LOCATION_TABLE_NAME + " WHERE "
+    final String select = "SELECT " + TrackMeDBDetails._ID + " FROM " + TrackMeDBDetails.TABLE_LOCATIONS + " WHERE "
         + TrackMeDBDetails.COLUMN_NAME_TS + " < " + uploadTime + " ORDER BY " + TrackMeDBDetails.COLUMN_NAME_TS + " ASC " + " LIMIT "
         + TrackMeDBDetails.LOCATIONS_QUERY_LIMIT;
-    final String sql = "UPDATE " + TrackMeDBDetails.LOCATION_TABLE_NAME + " SET " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + " = "
-        + uploadID + " WHERE " + TrackMeDBDetails._ID + " IN " + "(" + select + ")";
+    final String sql = "UPDATE " + TrackMeDBDetails.TABLE_LOCATIONS + " SET " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + " = " + uploadID
+        + " WHERE " + TrackMeDBDetails._ID + " IN " + "(" + select + ")";
     db.execSQL(sql);
   }
 
@@ -156,7 +121,7 @@ final class TrackMeDB {
     final String selection = TrackMeDBDetails.COLUMN_NAME_SESSION_ID + "=?";
     final String[] selectionArgs = { String.valueOf(sessionID) };
     int batchID;
-    final Cursor c = db.query(TrackMeDBDetails.SESSION_TABLE_NAME, columns, selection, selectionArgs, null, null, null, null);
+    final Cursor c = db.query(TrackMeDBDetails.TABLE_SESSION, columns, selection, selectionArgs, null, null, null, null);
     if (c.moveToFirst()) {
       batchID = c.getInt(c.getColumnIndexOrThrow(TrackMeDBDetails.COLUMN_NAME_LAST_BATCH_ID));
     } else {
@@ -181,22 +146,45 @@ final class TrackMeDB {
       lvalues.put(TrackMeDBDetails.COLUMN_NAME_LAST_BATCH_ID, batchID);
       final String selection = TrackMeDBDetails.COLUMN_NAME_SESSION_ID + "=?";
       final String[] selectionArgs = { sessionID };
-      db.update(TrackMeDBDetails.SESSION_TABLE_NAME, lvalues, selection, selectionArgs);
+      db.update(TrackMeDBDetails.TABLE_SESSION, lvalues, selection, selectionArgs);
 
       final ContentValues values = new ContentValues();
       values.put(TrackMeDBDetails.COLUMN_NAME_BATCH_ID, batchID);
       final String where = TrackMeDBDetails.COLUMN_NAME_SESSION_ID + "=? AND " + TrackMeDBDetails.COLUMN_NAME_BATCH_ID + " is null AND "
           + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + "=?";
       final String[] whereArgs = new String[] { sessionID, "" + uploadID };
-      db.update(TrackMeDBDetails.LOCATION_TABLE_NAME, values, where, whereArgs);
+      db.update(TrackMeDBDetails.TABLE_LOCATIONS, values, where, whereArgs);
 
     }
   }
 
-  public void moveLocations(final int uploadID, final List<String> sessions) {
-    // TODO move the locations from current table to its respective table after
-    // upload
+  private void moveLocations(final String tableName, final int uploadID, final String sessionID, final int batchID) {
+    final String where = " WHERE " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + "=" + uploadID + " AND "
+        + TrackMeDBDetails.COLUMN_NAME_SESSION_ID + "=" + sessionID + " AND " + TrackMeDBDetails.COLUMN_NAME_BATCH_ID + "=" + batchID;
 
+    final String cols = TrackMeDBDetails.COLUMN_NAME_SESSION_ID + ", " + TrackMeDBDetails.COLUMN_NAME_LAT + ", "
+        + TrackMeDBDetails.COLUMN_NAME_LNG + ", " + TrackMeDBDetails.COLUMN_NAME_ACC + ", " + TrackMeDBDetails.COLUMN_NAME_TS + ", "
+        + TrackMeDBDetails.COLUMN_NAME_BATCH_ID;
+
+    final String moveSql = "INSERT INTO " + tableName + " (" + cols + ")" + "SELECT " + cols + " FROM " + TrackMeDBDetails.TABLE_LOCATIONS
+        + where;
+
+    db.execSQL(moveSql);
+
+    final String deleteSql = "DELETE FROM " + TrackMeDBDetails.TABLE_LOCATIONS + where;
+
+    db.execSQL(deleteSql);
+  }
+
+  public void archiveLocations(final int uploadID, final String sessionID, final int batchID) {
+    moveLocations(TrackMeDBDetails.TABLE_ARCHIVED_LOCATIONS, uploadID, sessionID, batchID);
+  }
+
+  public void moveLocationsToSessionTable(final int uploadID, final String sessionID, final int batchID) {
+
+    db.execSQL(TrackMeDBHelper.makeSessionTableSQL(sessionID));
+
+    moveLocations(sessionID, uploadID, sessionID, batchID);
   }
 
   private Map<SessionBatchTuple, List<String>> batching(final Cursor c, final int uploadID) {
@@ -242,11 +230,11 @@ final class TrackMeDB {
   public void newSession(final String sessionID) {
     final ContentValues values = new ContentValues();
     values.put(TrackMeDBDetails.COLUMN_NAME_SESSION_ID, sessionID);
-    db.insert(TrackMeDBDetails.SESSION_TABLE_NAME, null, values);
+    db.insert(TrackMeDBDetails.TABLE_SESSION, null, values);
   }
 
   public void clearUploadIDs() {
-    final String sql = "UPDATE " + TrackMeDBDetails.LOCATION_TABLE_NAME + " SET " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + " = null"
+    final String sql = "UPDATE " + TrackMeDBDetails.TABLE_LOCATIONS + " SET " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + " = null"
         + " WHERE " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + " != null ";
     db.execSQL(sql);
   }
