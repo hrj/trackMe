@@ -1,5 +1,9 @@
 package com.uprootlabs.trackme;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -35,6 +39,10 @@ public final class LocationService extends Service implements LocationListener, 
   public static final String PARAM_LOCATION_SERVICE_STATUS = "serviceStatus";
   public static final String STATUS_CAPTURING_LOCATIONS = "capturingLocations";
   public static final String STATUS_WARMED_UP = "warmedUp";
+  public static final String LATITUDE = "latitude";
+  public static final String LONGITUDE = "longitude";
+  public static final String ACCURACY = "accuracy";
+  public static final String TIMESTAMP = "timestamp";
   private int captureFrequency;
   private Notification notification;
   private LocationClient myLocationClient;
@@ -162,6 +170,14 @@ public final class LocationService extends Service implements LocationListener, 
 
     Log.d(LOCATION_SERVICE_TAG, "stop Capturing");
     intent.putExtra(PARAM_LOCATION_SERVICE_STATUS, STATUS_WARMED_UP);
+
+    Intent uiIntent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_UI);
+    uiIntent.putExtra(LATITUDE, "");
+    uiIntent.putExtra(LONGITUDE, "");
+    uiIntent.putExtra(ACCURACY, "");
+    uiIntent.putExtra(TIMESTAMP, "");
+    LocalBroadcastManager.getInstance(this).sendBroadcast(uiIntent);
+
     stopForeground(true);
   }
 
@@ -181,6 +197,17 @@ public final class LocationService extends Service implements LocationListener, 
     final long timeStamp = System.currentTimeMillis();
     Log.d(LOCATION_SERVICE_TAG, "Locations Changed");
     db.insertNewLocations(location, timeStamp);
+
+    Date date = new Date(timeStamp);
+    DateFormat formatter = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
+    String dateFormatted = formatter.format(date);
+
+ Intent intent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_UI);
+    intent.putExtra(LATITUDE, "" + location.getLatitude());
+    intent.putExtra(LONGITUDE, "" + location.getLongitude());
+    intent.putExtra(ACCURACY, "" + location.getAccuracy());
+    intent.putExtra(TIMESTAMP, dateFormatted);
+    LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
   }
 
   private boolean servicesConnected() {

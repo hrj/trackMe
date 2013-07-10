@@ -19,19 +19,22 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public final class MainActivity extends Activity {
 
   public static final String MAIN_ACTIVITY_LOCATION_SERVICE_STATUS = "MainActivity/locationServiceStatus";
+  public static final String MAIN_ACTIVITY_UPDATE_UI = "MainActivity/updateUI";
   private static final String MAIN_ACTIVITY_TAG = "mainActivity";
+  private final IntentFilter locationsServiceStatusIntentFilter = new IntentFilter();
 
-  // private TextView valueLat;
-  // private TextView valueLng;
-  // private TextView valueAccuracy;
-  // private TextView valueTimeStamp;
-  // private TextView valueCaptureFrequency;
-  // private TextView valueUpdateFrequency;
+  private TextView valueLat;
+  private TextView valueLng;
+  private TextView valueAccuracy;
+  private TextView valueTimeStamp;
+  private TextView valueCaptureFrequency;
+  private TextView valueUpdateFrequency;
 
   private Button startStopButton;
 
@@ -46,13 +49,23 @@ public final class MainActivity extends Activity {
     @Override
     public void onReceive(final Context context, final Intent intent) {
       final String serviceStatus = intent.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
+      final String broadcastAction = intent.getAction();
 
-      if (serviceStatus.equals(LocationService.STATUS_WARMED_UP)) {
-        captureServiceStatus = LocationService.STATUS_WARMED_UP;
-        startStopButton.setEnabled(true);
-      } else if (serviceStatus == null) {
-        captureServiceStatus = null;
-        startStopButton.setEnabled(false);
+      if (broadcastAction.equals(MAIN_ACTIVITY_LOCATION_SERVICE_STATUS)) {
+        Log.d(MAIN_ACTIVITY_TAG, "serviceStatus recieved");
+        if (serviceStatus.equals(LocationService.STATUS_WARMED_UP)) {
+          captureServiceStatus = LocationService.STATUS_WARMED_UP;
+          startStopButton.setEnabled(true);
+        } else if (serviceStatus == null) {
+          captureServiceStatus = null;
+          startStopButton.setEnabled(false);
+        }
+      } else if (broadcastAction.equals(MAIN_ACTIVITY_UPDATE_UI)) {
+        Log.d(MAIN_ACTIVITY_TAG, "updateUI broadcast");
+        valueLat.setText(intent.getStringExtra(LocationService.LATITUDE));
+        valueLng.setText(intent.getStringExtra(LocationService.LONGITUDE));
+        valueAccuracy.setText(intent.getStringExtra(LocationService.ACCURACY));
+        valueTimeStamp.setText(intent.getStringExtra(LocationService.TIMESTAMP));
       }
     }
 
@@ -63,13 +76,16 @@ public final class MainActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    // valueCaptureFrequency = (TextView)
-    // findViewById(R.id.valueCaptureFrequency);
-    // valueUpdateFrequency = (TextView)
-    // findViewById(R.id.valueUpdateFrequency);
+    valueCaptureFrequency = (TextView) findViewById(R.id.valueCaptureFrequency);
+    valueUpdateFrequency = (TextView) findViewById(R.id.valueUpdateFrequency);
+    valueLat = (TextView) findViewById(R.id.lat);
+    valueLng = (TextView) findViewById(R.id.lng);
+    valueAccuracy = (TextView) findViewById(R.id.accuracy);
+    valueTimeStamp = (TextView) findViewById(R.id.timeStamp);
     startStopButton = (Button) findViewById(R.id.startStop);
 
-    final IntentFilter locationsServiceStatusIntentFilter = new IntentFilter(MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
+    locationsServiceStatusIntentFilter.addAction(MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
+    locationsServiceStatusIntentFilter.addAction(MAIN_ACTIVITY_UPDATE_UI);
 
     LocalBroadcastManager.getInstance(this).registerReceiver(broadCastReceiverMainActivity, locationsServiceStatusIntentFilter);
 
@@ -89,11 +105,6 @@ public final class MainActivity extends Activity {
       startStopButton.setText(R.string.stop_capturing);
     }
 
-    // valueLat = (TextView) findViewById(R.id.lat);
-    // valueLng = (TextView) findViewById(R.id.lng);
-    // valueAccuracy = (TextView) findViewById(R.id.accuracy);
-    // valueTimeStamp = (TextView) findViewById(R.id.timeStamp);
-
     myPreference = new MyPreference(this);
   }
 
@@ -109,8 +120,11 @@ public final class MainActivity extends Activity {
   public void onResume() {
     super.onResume();
 
-    // valueCaptureFrequency.setText(myPreference.getCaptureFrequency());
-    // valueUpdateFrequency.setText(myPreference.getUpdateFrequency());
+    String captureFrequency = "" + (myPreference.getCaptureFrequency() / TrackMeHelper.MILLISECONDS_PER_SECOND) + "sec";
+    String updateFrequency = ""
+        + (myPreference.getUpdateFrequency() / TrackMeHelper.SECONDS_PER_MINUTE / TrackMeHelper.MILLISECONDS_PER_SECOND) + "min";
+    valueCaptureFrequency.setText(captureFrequency);
+    valueUpdateFrequency.setText(updateFrequency);
   }
 
   @Override

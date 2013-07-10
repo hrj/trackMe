@@ -158,7 +158,7 @@ final class TrackMeDB {
     }
   }
 
-  private void moveLocations(final String tableName, final int uploadID, final String sessionID, final int batchID) {
+  private int moveLocations(final String tableName, final int uploadID, final String sessionID, final int batchID) {
     final String where = " WHERE " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + "=" + uploadID + " AND "
         + TrackMeDBDetails.COLUMN_NAME_SESSION_ID + "=" + sessionID + " AND " + TrackMeDBDetails.COLUMN_NAME_BATCH_ID + "=" + batchID;
 
@@ -171,13 +171,14 @@ final class TrackMeDB {
 
     db.execSQL(moveSql);
 
-    final String deleteSql = "DELETE FROM " + TrackMeDBDetails.TABLE_LOCATIONS + where;
-
-    db.execSQL(deleteSql);
+    return db.delete(TrackMeDBDetails.TABLE_LOCATIONS, where, null);
   }
 
   public void archiveLocations(final int uploadID, final String sessionID, final int batchID) {
-    moveLocations(TrackMeDBDetails.TABLE_ARCHIVED_LOCATIONS, uploadID, sessionID, batchID);
+  moveLocations(TrackMeDBDetails.TABLE_ARCHIVED_LOCATIONS, uploadID, sessionID, batchID);
+    
+    
+
   }
 
   public void moveLocationsToSessionTable(final int uploadID, final String sessionID, final int batchID) {
@@ -185,6 +186,7 @@ final class TrackMeDB {
     db.execSQL(TrackMeDBHelper.makeSessionTableSQL(sessionID));
 
     moveLocations(sessionID, uploadID, sessionID, batchID);
+
   }
 
   private Map<SessionBatchTuple, List<String>> batching(final Cursor c, final int uploadID) {
