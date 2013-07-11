@@ -174,19 +174,13 @@ final class TrackMeDB {
     return db.delete(TrackMeDBDetails.TABLE_LOCATIONS, where, null);
   }
 
-  public void archiveLocations(final int uploadID, final String sessionID, final int batchID) {
-  moveLocations(TrackMeDBDetails.TABLE_ARCHIVED_LOCATIONS, uploadID, sessionID, batchID);
-    
-    
-
+  public int archiveLocations(final int uploadID, final String sessionID, final int batchID) {
+    return moveLocations(TrackMeDBDetails.TABLE_ARCHIVED_LOCATIONS, uploadID, sessionID, batchID);
   }
 
-  public void moveLocationsToSessionTable(final int uploadID, final String sessionID, final int batchID) {
-
+  public int moveLocationsToSessionTable(final int uploadID, final String sessionID, final int batchID) {
     db.execSQL(TrackMeDBHelper.makeSessionTableSQL(sessionID));
-
-    moveLocations(sessionID, uploadID, sessionID, batchID);
-
+    return moveLocations(sessionID, uploadID, sessionID, batchID);
   }
 
   private Map<SessionBatchTuple, List<String>> batching(final Cursor c, final int uploadID) {

@@ -46,6 +46,13 @@
             android:label="@string/title_activity_dialog"
             android:theme="@android:style/Theme.Dialog" >
         </activity>
+        <activity
+            android:name="com.uprootlabs.trackme.DebugActivity"
+            android:label="@string/title_activity_debug" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.uprootlabs.trackme.MainActivity" />
+        </activity>
     </application>
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />

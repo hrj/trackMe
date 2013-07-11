@@ -149,6 +149,11 @@ public final class MainActivity extends Activity {
       Log.d(MAIN_ACTIVITY_TAG, "Upload");
       break;
 
+    case R.id.action_debug:
+      final Intent debug = new Intent(this, DebugActivity.class);
+      startActivity(debug);
+      break;
+
     }
 
     return true;

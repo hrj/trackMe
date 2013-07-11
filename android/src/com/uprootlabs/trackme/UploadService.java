@@ -89,9 +89,17 @@ public final class UploadService extends Service {
               final int batchID = Integer.parseInt(e.getAttribute("bid"));
 
               if (Boolean.getBoolean(e.getAttribute("accepted"))) {
-                db.moveLocationsToSessionTable(uploadID, sessionID, batchID);
+                int archivedCount = db.moveLocationsToSessionTable(uploadID, sessionID, batchID);
+                updatePreferences.addArchivedCount(archivedCount);
+
+                Intent debugIntent = new Intent(DebugActivity.DEBUG_ACTIVITY_UPDATE_UI);
+                LocalBroadcastManager.getInstance(UploadService.this).sendBroadcast(debugIntent);
               } else {
-                db.archiveLocations(uploadID, sessionID, batchID);
+                int uploadedCount = db.archiveLocations(uploadID, sessionID, batchID);
+                updatePreferences.addUploadedCount(uploadedCount);
+
+                Intent debugIntent = new Intent(DebugActivity.DEBUG_ACTIVITY_UPDATE_UI);
+                LocalBroadcastManager.getInstance(UploadService.this).sendBroadcast(debugIntent);
               }
 
             }
@@ -118,6 +126,8 @@ public final class UploadService extends Service {
   public static final String AUTO_UPLOAD = "auto";
   public static final String UPLOAD_TIME = "uploadTime";
   public static final int MAX_RETRY_COUNT = 5;
+
+  DebugHelper updatePreferences;
 
   SQLiteDatabase myDb;
   TrackMeDB db;
@@ -151,6 +161,7 @@ public final class UploadService extends Service {
     myDb = new TrackMeDBHelper(this).getWritableDatabase();
     db = new TrackMeDB(myDb, this);
     myPreference = new MyPreference(this);
+    updatePreferences = new DebugHelper(this);
     Log.d(UPLOAD_SERVICE_TAG, "Upload Service Created");
   }
 
@@ -285,7 +296,6 @@ public final class UploadService extends Service {
       e.printStackTrace();
     }
     http.close();
-
 
     if (code == HttpStatus.SC_OK) {
       Log.d(UPLOAD_SERVICE_TAG, "valid");
