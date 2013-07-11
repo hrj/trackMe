@@ -14,12 +14,12 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:text="@string/label_lat"
+        android:text="Lat : "
         android:textSize="20sp" />
 
     <TextView
         android:id="@+id/lat"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@id/labelLat"
         android:layout_marginLeft="10dp"
@@ -30,17 +30,17 @@
         android:id="@+id/labelLng"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@id/labelLat"
-        android:text="@string/label_lng"
+        android:layout_alignBaseline="@id/lat"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@id/lat"
+        android:text="Long : "
         android:textSize="20sp" />
 
     <TextView
         android:id="@+id/lng"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@id/labelLng"
-        android:layout_below="@id/lat"
         android:layout_marginLeft="10dp"
         android:layout_toRightOf="@id/labelLng"
         android:textSize="20sp" />
@@ -50,7 +50,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_below="@id/labelLng"
+        android:layout_below="@id/labelLat"
         android:text="@string/label_accuracy"
         android:textSize="20sp" />
 
@@ -59,7 +59,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@id/labelAccuracy"
-        android:layout_below="@id/lng"
+        android:layout_below="@id/lat"
         android:layout_marginLeft="10dp"
         android:layout_toRightOf="@id/labelAccuracy"
         android:textSize="20sp" />
@@ -142,9 +142,10 @@
 
     <Button
         android:id="@+id/startStop"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/new_session"
         android:enabled="false"
         android:onClick="onClickStartStop"
         android:text="@string/start_capturing" />
@@ -153,10 +154,8 @@
         android:id="@+id/new_session"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@id/startStop"
-        android:layout_alignLeft="@id/startStop"
-        android:layout_alignRight="@id/startStop"
-        android:layout_marginBottom="15dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
         android:onClick="onClickNewSession"
         android:text="@string/new_session" />
 
@@ -164,11 +163,25 @@
         android:id="@+id/upload"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@id/new_session"
-        android:layout_alignLeft="@id/new_session"
-        android:layout_alignRight="@id/new_session"
-        android:layout_marginBottom="15dp"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@id/startStop"
         android:onClick="onClickUpload"
         android:text="@string/upload" />
+
+    <ScrollView
+        android:id="@+id/scrollView1"
+        android:layout_width="fill_parent"
+        android:layout_height="300dp"
+        android:layout_above="@+id/startStop"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="20dp" >
+
+        <TextView
+            android:id="@+id/debug"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:typeface="monospace" />
+    </ScrollView>
 
 </RelativeLayout>

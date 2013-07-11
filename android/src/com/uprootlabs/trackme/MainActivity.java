@@ -28,6 +28,7 @@ public final class MainActivity extends Activity {
   public static final String MAIN_ACTIVITY_UPDATE_UI = "MainActivity/updateUI";
   private static final String MAIN_ACTIVITY_TAG = "mainActivity";
   private final IntentFilter locationsServiceStatusIntentFilter = new IntentFilter();
+  DebugHelper debugPreferences;
 
   private TextView valueLat;
   private TextView valueLng;
@@ -35,6 +36,8 @@ public final class MainActivity extends Activity {
   private TextView valueTimeStamp;
   private TextView valueCaptureFrequency;
   private TextView valueUpdateFrequency;
+  private TextView valueSessionID;
+  private TextView debug;
 
   private Button startStopButton;
 
@@ -62,10 +65,9 @@ public final class MainActivity extends Activity {
         }
       } else if (broadcastAction.equals(MAIN_ACTIVITY_UPDATE_UI)) {
         Log.d(MAIN_ACTIVITY_TAG, "updateUI broadcast");
-        valueLat.setText(intent.getStringExtra(LocationService.LATITUDE));
-        valueLng.setText(intent.getStringExtra(LocationService.LONGITUDE));
-        valueAccuracy.setText(intent.getStringExtra(LocationService.ACCURACY));
-        valueTimeStamp.setText(intent.getStringExtra(LocationService.TIMESTAMP));
+        updateLocationDetails(intent);
+        final String debugDetails = debugPreferences.getDebugDetails();
+        debug.setText(debugDetails);
       }
     }
 
@@ -74,10 +76,12 @@ public final class MainActivity extends Activity {
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+    setContentView(R.layout.debug_main);
 
     valueCaptureFrequency = (TextView) findViewById(R.id.valueCaptureFrequency);
     valueUpdateFrequency = (TextView) findViewById(R.id.valueUpdateFrequency);
+    valueSessionID = (TextView) findViewById(R.id.valueSessionID);
+    debug = (TextView) findViewById(R.id.debug);
     valueLat = (TextView) findViewById(R.id.lat);
     valueLng = (TextView) findViewById(R.id.lng);
     valueAccuracy = (TextView) findViewById(R.id.accuracy);
@@ -106,6 +110,7 @@ public final class MainActivity extends Activity {
     }
 
     myPreference = new MyPreference(this);
+    debugPreferences = new DebugHelper(this);
   }
 
   @Override
@@ -123,8 +128,12 @@ public final class MainActivity extends Activity {
     String captureFrequency = "" + (myPreference.getCaptureFrequency() / TrackMeHelper.MILLISECONDS_PER_SECOND) + "sec";
     String updateFrequency = ""
         + (myPreference.getUpdateFrequency() / TrackMeHelper.SECONDS_PER_MINUTE / TrackMeHelper.MILLISECONDS_PER_SECOND) + "min";
+    String sessionID = myPreference.getSessionID();
     valueCaptureFrequency.setText(captureFrequency);
     valueUpdateFrequency.setText(updateFrequency);
+    valueSessionID.setText(sessionID);
+    final String debugDetails = debugPreferences.getDebugDetails();
+    debug.setText(debugDetails);
   }
 
   @Override
@@ -215,14 +224,22 @@ public final class MainActivity extends Activity {
 
   }
 
+  private void updateLocationDetails(Intent intent) {
+    valueLat.setText(intent.getStringExtra(LocationService.LATITUDE));
+    valueLng.setText(intent.getStringExtra(LocationService.LONGITUDE));
+    valueAccuracy.setText(intent.getStringExtra(LocationService.ACCURACY));
+    valueTimeStamp.setText(intent.getStringExtra(LocationService.TIMESTAMP));
+  }
+
   public void onClickNewSession(final View v) {
     final AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
+    final String sessionID = myPreference.getSessionID();
     alert.setTitle(this.getResources().getString(R.string.new_session_id));
-    alert.setMessage(this.getResources().getString(R.string.label_current_session_id) + myPreference.getSessionID());
+    alert.setMessage(this.getResources().getString(R.string.label_current_session_id) + sessionID);
 
     final EditText input = new EditText(this);
-    input.setHint("Enter New SessionID");
+    input.setText(sessionID);
     alert.setView(input);
 
     alert.setPositiveButton(this.getResources().getString(R.string.ok), new DialogInterface.OnClickListener() {
@@ -234,7 +251,7 @@ public final class MainActivity extends Activity {
           if (captureServiceStatus.equals(LocationService.STATUS_WARMED_UP))
             onClickStartStop(v);
         }
-        Toast.makeText(MainActivity.this, "New session started with SessionID : " + myPreference.getSessionID(), Toast.LENGTH_SHORT).show();
+        valueSessionID.setText(myPreference.getSessionID());
       }
     });
 
@@ -245,6 +262,13 @@ public final class MainActivity extends Activity {
     });
 
     alert.show();
+  }
+
+  public void onClickUpload(final View v) {
+    final Intent intent = new Intent(this, UploadService.class);
+    intent.putExtra(UploadService.UPLOAD_TYPE, UploadService.MANUAL_UPLOAD);
+    startService(intent);
+    Log.d(MAIN_ACTIVITY_TAG, "Upload");
   }
 
   private void stopCapturingLocations() {

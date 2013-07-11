@@ -92,14 +92,9 @@ public final class UploadService extends Service {
                 int archivedCount = db.moveLocationsToSessionTable(uploadID, sessionID, batchID);
                 updatePreferences.addArchivedCount(archivedCount);
 
-                Intent debugIntent = new Intent(DebugActivity.DEBUG_ACTIVITY_UPDATE_UI);
-                LocalBroadcastManager.getInstance(UploadService.this).sendBroadcast(debugIntent);
               } else {
                 int uploadedCount = db.archiveLocations(uploadID, sessionID, batchID);
                 updatePreferences.addUploadedCount(uploadedCount);
-
-                Intent debugIntent = new Intent(DebugActivity.DEBUG_ACTIVITY_UPDATE_UI);
-                LocalBroadcastManager.getInstance(UploadService.this).sendBroadcast(debugIntent);
               }
 
             }

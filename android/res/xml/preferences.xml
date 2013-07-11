@@ -15,6 +15,7 @@
         android:title="@string/passkey" />
 
     <com.uprootlabs.trackme.MyEditTextPreference
+        android:defaultValue="@string/server_location_default"
         android:dialogTitle="@string/server_location"
         android:inputType="text"
         android:key="@string/key_server_location"
@@ -22,10 +23,10 @@
         android:title="@string/server_location" />
 
     <com.uprootlabs.trackme.MyEditTextPreference
+        android:defaultValue="@string/session_id_default"
         android:dialogTitle="@string/session_id"
         android:inputType="text"
         android:key="@string/key_session_id"
-        android:defaultValue="@string/session_id_default"
         android:summary="@string/session_id_summary"
         android:title="@string/session_id" />
 

@@ -202,18 +202,15 @@ public final class LocationService extends Service implements LocationListener, 
     DateFormat formatter = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
     String dateFormatted = formatter.format(date);
 
+    DebugHelper updatePreferences = new DebugHelper(this);
+    updatePreferences.addCapturedCount();
+
     Intent intent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_UI);
     intent.putExtra(LATITUDE, "" + location.getLatitude());
     intent.putExtra(LONGITUDE, "" + location.getLongitude());
     intent.putExtra(ACCURACY, "" + location.getAccuracy());
     intent.putExtra(TIMESTAMP, dateFormatted);
     LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-
-    DebugHelper updatePreferences = new DebugHelper(this);
-    updatePreferences.addCapturedCount();
-
-    Intent debugIntent = new Intent(DebugActivity.DEBUG_ACTIVITY_UPDATE_UI);
-    LocalBroadcastManager.getInstance(this).sendBroadcast(debugIntent);
 
   }
 

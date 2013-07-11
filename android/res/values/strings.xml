@@ -10,6 +10,7 @@
     <string name="passkey_summary">PassKey</string>
     <string name="server_location">Server Location</string>
     <string name="server_location_summary">Server to which the locations have to be uploaded, default is the test server</string>
+    <string name="server_location_default">https://testtrackme.appspot.com/api/</string>
     <string name="session_id">Sessoin ID</string>
     <string name="session_id_summary">Name assigned for locations captured between start and stop</string>
     <string name="session_id_default">session1</string>
