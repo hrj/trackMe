@@ -21,25 +21,29 @@ public class DebugHelper {
     db = new TrackMeDBHelper(context).getReadableDatabase();
   }
 
-  public void addCapturedCount() {
+  public synchronized void addCapturedCount() {
     int captureCount = debug.getInt(PREFERENCE_TOTAL_LOCATION_COUNT, 0);
+    int queued = debug.getInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, 0);
     debugEditor.putInt(PREFERENCE_TOTAL_LOCATION_COUNT, captureCount + 1);
+    debugEditor.putInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, queued + 1);
     debugEditor.commit();
   }
 
-  public void addArchivedCount(int archivedCount) {
-    archivedCount += debug.getInt(PREFERENCE_ARCHIVED_LOCATION_COUNT, 0);
+  public synchronized void addArchivedCount(int newArchivedCount) {
+    int oldArchivedCount = debug.getInt(PREFERENCE_ARCHIVED_LOCATION_COUNT, 0);
+    int archivedCount = oldArchivedCount + newArchivedCount;
     int queued = debug.getInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, 0);
     debugEditor.putInt(PREFERENCE_ARCHIVED_LOCATION_COUNT, archivedCount);
-    debugEditor.putInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, queued - archivedCount);
+    debugEditor.putInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, queued - newArchivedCount);
     debugEditor.commit();
   }
 
-  public void addUploadedCount(int uploadedCount) {
-    uploadedCount += debug.getInt(PREFERENCE_UPLOADED_LOCATION_COUNT, 0);
+  public synchronized void addUploadedCount(int newUploadedCount) {
+    int oldUploadedCount = debug.getInt(PREFERENCE_UPLOADED_LOCATION_COUNT, 0);
     int queued = debug.getInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, 0);
+    int uploadedCount = oldUploadedCount + newUploadedCount ;
     debugEditor.putInt(PREFERENCE_UPLOADED_LOCATION_COUNT, uploadedCount);
-    debugEditor.putInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, queued - uploadedCount);
+    debugEditor.putInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, queued - newUploadedCount);
     debugEditor.commit();
   }
 
@@ -53,7 +57,7 @@ public class DebugHelper {
     debugEditor.commit();
   }
 
-  public String getQueuedLocationsDetails() {
+  private synchronized String getQueuedLocationsDetails() {
     String sql = "SELECT " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + ", " + TrackMeDBDetails.COLUMN_NAME_SESSION_ID + ", "
         + TrackMeDBDetails.COLUMN_NAME_BATCH_ID + ", " + "COUNT(*) FROM " + TrackMeDBDetails.TABLE_LOCATIONS + " GROUP BY "
         + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + ", " + TrackMeDBDetails.COLUMN_NAME_SESSION_ID + ", "
@@ -84,7 +88,7 @@ public class DebugHelper {
     return queued.toString();
   }
 
-  public String getDebugDetails() {
+  public synchronized String getDebugDetails() {
     final int totalCount = debug.getInt(DebugHelper.PREFERENCE_TOTAL_LOCATION_COUNT, 0);
     final int uploadedCount = debug.getInt(DebugHelper.PREFERENCE_UPLOADED_LOCATION_COUNT, 0);
     final int archivedCount = debug.getInt(DebugHelper.PREFERENCE_ARCHIVED_LOCATION_COUNT, 0);
