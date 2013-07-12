@@ -75,17 +75,17 @@ final class TrackMeDB {
     final StringBuffer locationsAsXML = new StringBuffer();
     final String userID = myPreferences.getUserID();
     final String passKey = myPreferences.getPassKey();
-    locationsAsXML.append("<sessions userID=\"" + userID + "\" passKey=\"" + passKey + "\" uid=\"" + uploadID + ">");
+    locationsAsXML.append("<upload userid=\"" + userID + "\" passkey=\"" + passKey + "\" uid=\"" + uploadID + ">");
     for (final Map.Entry<SessionBatchTuple, List<String>> session : sessions.entrySet()) {
       final StringBuffer batch = new StringBuffer();
       final SessionBatchTuple t = session.getKey();
       final String locations = mkString(session.getValue());
-      batch.append("<session sid=\"" + t.getSessionID() + "\" bid=\"" + t.getBatchID() + "\">");
+      batch.append("<batch sid=\"" + t.getSessionID() + "\" bid=\"" + t.getBatchID() + "\">");
       batch.append(locations);
-      batch.append("</session>");
+      batch.append("</batch>");
       locationsAsXML.append(batch);
     }
-    locationsAsXML.append("</sessions>");
+    locationsAsXML.append("</upload>");
     return locationsAsXML.toString();
   }
 

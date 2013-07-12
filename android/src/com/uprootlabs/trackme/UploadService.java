@@ -54,7 +54,7 @@ public final class UploadService extends Service {
           final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
           final HttpPost httpPost = new HttpPost(serverURL);
           GzipHelper.setCompressedEntity(UploadService.this, locations, httpPost);
-          httpPost.addHeader("userID", userID);
+          httpPost.addHeader("userid", userID);
           httpPost.addHeader("passkey", passKey);
           while (retryCount < MAX_RETRY_COUNT) {
 
@@ -79,7 +79,7 @@ public final class UploadService extends Service {
           if (code == HttpStatus.SC_OK) {
             final Document doc = ResponseParsing.getDomElement(ResponseParsing.getXML(response));
 
-            final int uploadID = Integer.parseInt(doc.getDocumentElement().getAttribute("id"));
+            final int uploadID = Integer.parseInt(doc.getDocumentElement().getAttribute("uid"));
 
             final NodeList nl = doc.getElementsByTagName("batch");
 
@@ -269,7 +269,7 @@ public final class UploadService extends Service {
   private boolean userAuthenticated(final String userID, final String passKey, final String serverURL) {
     final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
     final HttpGet httpGet = new HttpGet(serverURL);
-    httpGet.addHeader("userID", userID);
+    httpGet.addHeader("userid", userID);
     httpGet.addHeader("passkey", passKey);
     int code = -1;
     String message = "";
