@@ -356,6 +356,10 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
     }
   }
 
+  def validate = {
+    XmlContent(ResponseStatus(true, "User Authenticated").mkXML)
+  }
+
   def viewLocations(userId: String) = {
     if (userExists) {
       if (sharedFrom(currUserId).contains(userId) || userId == currUserId) {

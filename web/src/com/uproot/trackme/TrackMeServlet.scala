@@ -59,6 +59,7 @@ class TrackMeServlet extends HttpServlet {
         common.apiAuthentication(format, { loggedIn =>
           operation match {
             case "retrieve" => loggedIn.retrieveLocations
+            case "validate" => loggedIn.validate
             case _ => common.fileNotFound
           }
         })

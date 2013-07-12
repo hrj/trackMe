@@ -1,25 +1,12 @@
 package com.uproot.trackme
 
-import java.util.ArrayList
-import java.util.zip.GZIPInputStream
-import scala.Option.option2Iterable
-import scala.collection.JavaConverters.asScalaBufferConverter
-import scala.collection.JavaConverters.iterableAsScalaIterableConverter
-import scala.collection.JavaConverters.seqAsJavaListConverter
 import com.google.appengine.api.datastore.DatastoreServiceFactory
-import com.google.appengine.api.datastore.Entity
-import com.google.appengine.api.datastore.FetchOptions
-import com.google.appengine.api.datastore.KeyFactory
-import com.google.appengine.api.datastore.Query
-import com.google.appengine.api.datastore.Query.FilterOperator
-import com.google.appengine.api.datastore.Query.FilterPredicate
-import com.google.appengine.api.datastore.Query.SortDirection
-import com.google.appengine.api.users.UserServiceFactory
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo
 import com.google.appengine.api.datastore.EntityNotFoundException
 import com.google.appengine.api.datastore.Key
+import com.google.appengine.api.datastore.KeyFactory
+import com.google.appengine.api.users.UserServiceFactory
+
+import javax.servlet.http.HttpServletRequest
 case class MenuEntry(title: String, icon: String, url: String)
 class Menu(entries: Seq[MenuEntry]) {
 
@@ -62,14 +49,14 @@ class CommonFunctions(req: HttpServletRequest) {
   }
 
   private def checkPassKey = {
-    if (req.getHeader(COLUMN_USER_ID) != null && req.getHeader(COLUMN_PASS_KEY) != null) {
-      val userId = req.getHeader(COLUMN_USER_ID)
-      val passKey = req.getHeader(COLUMN_PASS_KEY)
+    if (req.getHeader(XML_ATTRIBUTE_USER_ID) != null && req.getHeader(XML_ATTRIBUTE_PASS_KEY) != null) {
+      val userId = req.getHeader(XML_ATTRIBUTE_USER_ID)
+      val passKey = req.getHeader(XML_ATTRIBUTE_PASS_KEY)
       val userKey = KeyFactory.createKey(KIND_USER_DETAILS, userId)
       try {
         val userEntity = datastore.get(userKey)
-        val dsUserID = userEntity.getProperty("userID")
-        val dsPassKey = userEntity.getProperty("passKey")
+        val dsUserID = userEntity.getProperty(COLUMN_USER_ID)
+        val dsPassKey = userEntity.getProperty(COLUMN_PASS_KEY)
         if (dsUserID == userId && dsPassKey == passKey) {
           true
         } else {
@@ -88,7 +75,7 @@ class CommonFunctions(req: HttpServletRequest) {
       val currUserId = userPrincipal.getName
       f(new LoggedIn(currUserId, req))
     } else if (checkPassKey) {
-      val currUserId = req.getHeader(COLUMN_USER_ID)
+      val currUserId = req.getHeader(XML_ATTRIBUTE_USER_ID)
       f(new LoggedIn(currUserId, req))
     } else {
       format match {
