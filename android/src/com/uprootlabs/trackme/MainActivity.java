@@ -94,6 +94,7 @@ public final class MainActivity extends Activity {
 
     locationsServiceStatusIntentFilter.addAction(MAIN_ACTIVITY_LOCATION_SERVICE_STATUS);
     locationsServiceStatusIntentFilter.addAction(MAIN_ACTIVITY_UPDATE_UI);
+    locationsServiceStatusIntentFilter.addAction(MAIN_ACTIVITY_UPDATE_DEBUG_UI);
 
     LocalBroadcastManager.getInstance(this).registerReceiver(broadCastReceiverMainActivity, locationsServiceStatusIntentFilter);
 
