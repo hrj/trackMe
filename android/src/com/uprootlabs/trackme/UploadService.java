@@ -88,13 +88,17 @@ public final class UploadService extends Service {
               final String sessionID = e.getAttribute("sid");
               final int batchID = Integer.parseInt(e.getAttribute("bid"));
 
-              if (Boolean.getBoolean(e.getAttribute("accepted"))) {
-                int archivedCount = db.moveLocationsToSessionTable(uploadID, sessionID, batchID);
-                updatePreferences.addArchivedCount(archivedCount);
-
-              } else {
-                int uploadedCount = db.archiveLocations(uploadID, sessionID, batchID);
+              if (e.getAttribute("accepted").equals("true")) {
+                Log.d(UPLOAD_SERVICE_TAG, "Boolean New" + e.getAttribute("accepted"));
+                int uploadedCount = db.moveLocationsToSessionTable(uploadID, sessionID, batchID);
                 updatePreferences.addUploadedCount(uploadedCount);
+                Intent intent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_DEBUG_UI);
+                LocalBroadcastManager.getInstance(UploadService.this).sendBroadcast(intent);
+              } else {
+                int archivedCount = db.archiveLocations(uploadID, sessionID, batchID);
+                updatePreferences.addArchivedCount(archivedCount);
+                Intent intent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_DEBUG_UI);
+                LocalBroadcastManager.getInstance(UploadService.this).sendBroadcast(intent);
               }
 
             }

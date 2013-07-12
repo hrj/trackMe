@@ -75,7 +75,7 @@ final class TrackMeDB {
     final StringBuffer locationsAsXML = new StringBuffer();
     final String userID = myPreferences.getUserID();
     final String passKey = myPreferences.getPassKey();
-    locationsAsXML.append("<upload userid=\"" + userID + "\" passkey=\"" + passKey + "\" uid=\"" + uploadID + ">");
+    locationsAsXML.append("<upload userid=\"" + userID + "\" passkey=\"" + passKey + "\" uid=\"" + uploadID + "\">");
     for (final Map.Entry<SessionBatchTuple, List<String>> session : sessions.entrySet()) {
       final StringBuffer batch = new StringBuffer();
       final SessionBatchTuple t = session.getKey();
@@ -159,15 +159,15 @@ final class TrackMeDB {
   }
 
   private int moveLocations(final String tableName, final int uploadID, final String sessionID, final int batchID) {
-    final String where = " WHERE " + TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + "=" + uploadID + " AND "
-        + TrackMeDBDetails.COLUMN_NAME_SESSION_ID + "=" + sessionID + " AND " + TrackMeDBDetails.COLUMN_NAME_BATCH_ID + "=" + batchID;
+    final String where =  TrackMeDBDetails.COLUMN_NAME_UPLOAD_ID + "=" + uploadID + " AND "
+        + TrackMeDBDetails.COLUMN_NAME_SESSION_ID + "=\"" + sessionID + "\" AND " + TrackMeDBDetails.COLUMN_NAME_BATCH_ID + "=" + batchID;
 
     final String cols = TrackMeDBDetails.COLUMN_NAME_SESSION_ID + ", " + TrackMeDBDetails.COLUMN_NAME_LAT + ", "
         + TrackMeDBDetails.COLUMN_NAME_LNG + ", " + TrackMeDBDetails.COLUMN_NAME_ACC + ", " + TrackMeDBDetails.COLUMN_NAME_TS + ", "
         + TrackMeDBDetails.COLUMN_NAME_BATCH_ID;
 
-    final String moveSql = "INSERT INTO " + tableName + " (" + cols + ")" + "SELECT " + cols + " FROM " + TrackMeDBDetails.TABLE_LOCATIONS
-        + where;
+    final String moveSql = "INSERT INTO " + tableName + " (" + cols + ") " + "SELECT " + cols + " FROM " + TrackMeDBDetails.TABLE_LOCATIONS
+        + " WHERE " + where;
 
     db.execSQL(moveSql);
 

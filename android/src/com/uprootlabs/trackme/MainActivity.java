@@ -26,6 +26,7 @@ public final class MainActivity extends Activity {
 
   public static final String MAIN_ACTIVITY_LOCATION_SERVICE_STATUS = "MainActivity/locationServiceStatus";
   public static final String MAIN_ACTIVITY_UPDATE_UI = "MainActivity/updateUI";
+  public static final String MAIN_ACTIVITY_UPDATE_DEBUG_UI = "MainActivity/updateDebugUI";
   private static final String MAIN_ACTIVITY_TAG = "mainActivity";
   private final IntentFilter locationsServiceStatusIntentFilter = new IntentFilter();
   DebugHelper debugPreferences;
@@ -66,6 +67,9 @@ public final class MainActivity extends Activity {
       } else if (broadcastAction.equals(MAIN_ACTIVITY_UPDATE_UI)) {
         Log.d(MAIN_ACTIVITY_TAG, "updateUI broadcast");
         updateLocationDetails(intent);
+        final String debugDetails = debugPreferences.getDebugDetails();
+        debug.setText(debugDetails);
+      } else if (broadcastAction.equals(MAIN_ACTIVITY_UPDATE_DEBUG_UI)) {
         final String debugDetails = debugPreferences.getDebugDetails();
         debug.setText(debugDetails);
       }

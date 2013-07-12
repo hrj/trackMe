@@ -29,13 +29,17 @@ public class DebugHelper {
 
   public void addArchivedCount(int archivedCount) {
     archivedCount += debug.getInt(PREFERENCE_ARCHIVED_LOCATION_COUNT, 0);
+    int queued = debug.getInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, 0);
     debugEditor.putInt(PREFERENCE_ARCHIVED_LOCATION_COUNT, archivedCount);
+    debugEditor.putInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, queued - archivedCount);
     debugEditor.commit();
   }
 
   public void addUploadedCount(int uploadedCount) {
     uploadedCount += debug.getInt(PREFERENCE_UPLOADED_LOCATION_COUNT, 0);
+    int queued = debug.getInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, 0);
     debugEditor.putInt(PREFERENCE_UPLOADED_LOCATION_COUNT, uploadedCount);
+    debugEditor.putInt(PREFERENCE_TOTAL_QUEUED_LOCATION_COUNT, queued - uploadedCount);
     debugEditor.commit();
   }
 
