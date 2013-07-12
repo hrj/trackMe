@@ -89,7 +89,7 @@ public final class UploadService extends Service {
               final int batchID = Integer.parseInt(e.getAttribute("bid"));
 
               if (e.getAttribute("accepted").equals("true")) {
-                Log.d(UPLOAD_SERVICE_TAG, "Boolean New" + e.getAttribute("accepted"));
+                Log.d(UPLOAD_SERVICE_TAG, "Boolean New " + e.getAttribute("accepted"));
                 int uploadedCount = db.moveLocationsToSessionTable(uploadID, sessionID, batchID);
                 updatePreferences.addUploadedCount(uploadedCount);
                 Intent intent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_DEBUG_UI);
@@ -174,12 +174,13 @@ public final class UploadService extends Service {
       uploadTime = System.currentTimeMillis();
     } else if (uploadType.equals(AUTO_UPLOAD)) {
       uploadTime = intent.getLongExtra(UPLOAD_TIME, System.currentTimeMillis());
+      Log.d(UPLOAD_SERVICE_TAG, "auto time " + uploadTime + " sys " + System.currentTimeMillis());
 
       final Intent intentStatus = new Intent(LocationService.ACTION_QUERY_STATUS_UPLOAD_SERVICE);
       LocalBroadcastManager.getInstance(this).sendBroadcastSync(intentStatus);
 
       captureServiceStatus = intentStatus.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
-      if (captureServiceStatus.equals(LocationService.STATUS_CAPTURING_LOCATIONS)) {
+      if (captureServiceStatus != null && captureServiceStatus.equals(LocationService.STATUS_CAPTURING_LOCATIONS)) {
         setAutoUpdate();
       }
     }
@@ -200,12 +201,12 @@ public final class UploadService extends Service {
   }
 
   private void setAutoUpdate() {
-    if (myPreference.isAutoUpdateSet() && running) {
+    if (myPreference.isAutoUpdateSet()) {
       final Intent intent = new Intent(this, UploadService.class);
       intent.putExtra(UPLOAD_TYPE, AUTO_UPLOAD);
       final long uploadTime = System.currentTimeMillis() + myPreference.getUpdateFrequency();
       intent.putExtra(UPLOAD_TIME, uploadTime);
-      piAutoUpdate = PendingIntent.getService(this, 0, intent, 0);
+      piAutoUpdate = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
       setAlarm(this, piAutoUpdate);
       Log.d(UPLOAD_SERVICE_TAG, "Auto Update Set");
     }
