@@ -294,7 +294,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
       val response = <upload uid={ upload.uploadid.toString }>
                        {
                          result.map { t =>
-                           <batch sid={ t._1 } bid={ t._2.toString } accapted={ t._3.toString }/>
+                           <batch sid={ t._1 } bid={ t._2.toString } accepted={ t._3.toString }/>
                          }
                        }
                      </upload>
