@@ -14,6 +14,7 @@ import org.w3c.dom.NodeList;
 
 import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -170,10 +171,9 @@ public final class UploadService extends Service {
     String captureServiceStatus;
     final String uploadType = intent.getStringExtra(UPLOAD_TYPE);
 
+    uploadTime = System.currentTimeMillis();
     if (uploadType.equals(MANUAL_UPLOAD)) {
-      uploadTime = System.currentTimeMillis();
     } else if (uploadType.equals(AUTO_UPLOAD)) {
-      uploadTime = intent.getLongExtra(UPLOAD_TIME, System.currentTimeMillis());
       Log.d(UPLOAD_SERVICE_TAG, "auto time " + uploadTime + " sys " + System.currentTimeMillis());
 
       final Intent intentStatus = new Intent(LocationService.ACTION_QUERY_STATUS_UPLOAD_SERVICE);
@@ -194,19 +194,17 @@ public final class UploadService extends Service {
   private void setForegroundService() {
     final Intent intentNotification = new Intent(this, MainActivity.class);
     final PendingIntent pi = PendingIntent.getActivity(this, 1, intentNotification, 0);
-    final Notification notificaion = new Notification(R.drawable.ic_launcher, "Uploading", System.currentTimeMillis());
-    notificaion.setLatestEventInfo(this, "TrackMe", "Uploading Locations", pi);
-    notificaion.flags |= Notification.FLAG_ONGOING_EVENT;
-    startForeground(2, notificaion);
+    final Notification notification = new Notification(R.drawable.ic_launcher, "Uploading", System.currentTimeMillis());
+    notification.setLatestEventInfo(this, "TrackMe", "Uploading Locations", pi);
+    notification.flags |= Notification.FLAG_ONGOING_EVENT;
+    startForeground(2, notification);
   }
 
   private void setAutoUpdate() {
     if (myPreference.isAutoUpdateSet()) {
       final Intent intent = new Intent(this, UploadService.class);
       intent.putExtra(UPLOAD_TYPE, AUTO_UPLOAD);
-      final long uploadTime = System.currentTimeMillis() + myPreference.getUpdateFrequency();
-      intent.putExtra(UPLOAD_TIME, uploadTime);
-      piAutoUpdate = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+      piAutoUpdate = PendingIntent.getService(this, 0, intent, 0);
       setAlarm(this, piAutoUpdate);
       Log.d(UPLOAD_SERVICE_TAG, "Auto Update Set");
     }
@@ -292,8 +290,15 @@ public final class UploadService extends Service {
       message = "Invalid Server URL";
       Log.d(UPLOAD_SERVICE_TAG, "Illegal");
     } catch (final IOException e) {
-      message = "Unknown Error";
+      code = 0;
       e.printStackTrace();
+      final Intent intentNotification = new Intent(this, MainActivity.class);
+      final PendingIntent pi = PendingIntent.getActivity(this, 1, intentNotification, 0);
+      NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+      Notification notification = new Notification(R.drawable.ic_launcher, "Upload Failed", System.currentTimeMillis());
+      notification.setLatestEventInfo(this, "UploadFailed", "Unknown Server Error", pi);
+      notification.flags |= Notification.FLAG_AUTO_CANCEL;
+      notificationManager.notify(9, notification);
     }
     http.close();
 
@@ -303,6 +308,8 @@ public final class UploadService extends Service {
     } else if (code == -1) {
       Log.d(UPLOAD_SERVICE_TAG, "Invalid" + " " + code);
       getApplication().startActivity(UserError.makeIntent(getBaseContext(), message));
+      return false;
+    } else if (code == 0) {
       return false;
     } else {
       message = "Invalid UserID or PassKey";
