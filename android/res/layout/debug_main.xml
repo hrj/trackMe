@@ -1,0 +1,187 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity" >
+
+    <TextView
+        android:id="@+id/labelLat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:text="Lat : "
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/lat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/labelLat"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@id/labelLat"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/labelLng"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/lat"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@id/lat"
+        android:text="Long : "
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/lng"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/labelLng"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@id/labelLng"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/labelAccuracy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/labelLat"
+        android:text="@string/label_accuracy"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/accuracy"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/labelAccuracy"
+        android:layout_below="@id/lat"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@id/labelAccuracy"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/labelTimeStamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/labelAccuracy"
+        android:text="@string/label_time_stamp"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/timeStamp"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/labelTimeStamp"
+        android:layout_below="@id/accuracy"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@id/labelTimeStamp"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/labelCaptureFrequency"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/labelTimeStamp"
+        android:text="@string/label_capture_frequency"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/valueCaptureFrequency"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/labelCaptureFrequency"
+        android:layout_below="@id/timeStamp"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@id/labelCaptureFrequency"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/labelUpdateFrequency"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/labelCaptureFrequency"
+        android:text="@string/label_update_frequency"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/valueUpdateFrequency"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/labelUpdateFrequency"
+        android:layout_below="@id/valueCaptureFrequency"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@id/labelUpdateFrequency"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/labelSessionID"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/labelUpdateFrequency"
+        android:text="@string/label_current_session_id"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/valueSessionID"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/labelSessionID"
+        android:layout_below="@id/valueUpdateFrequency"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@id/labelSessionID"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/startStop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/new_session"
+        android:enabled="false"
+        android:onClick="onClickStartStop"
+        android:text="@string/start_capturing" />
+
+    <Button
+        android:id="@+id/new_session"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:onClick="onClickNewSession"
+        android:text="@string/new_session" />
+
+    <Button
+        android:id="@+id/upload"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@id/startStop"
+        android:onClick="onClickUpload"
+        android:text="@string/upload" />
+
+    <ScrollView
+        android:id="@+id/scrollView1"
+        android:layout_width="fill_parent"
+        android:layout_height="300dp"
+        android:layout_above="@+id/startStop"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="20dp" >
+
+        <TextView
+            android:id="@+id/debug"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:typeface="monospace" />
+    </ScrollView>
+
+</RelativeLayout>

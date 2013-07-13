@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <com.uprootlabs.trackme.MyEditTextPreference
+        android:dialogTitle="@string/userid"
+        android:inputType="textEmailAddress"
+        android:key="@string/key_userid"
+        android:summary="@string/userid_summary"
+        android:title="@string/userid" />
+
+    <com.uprootlabs.trackme.MyEditTextPreferencePassword
+        android:dialogTitle="@string/passkey"
+        android:key="@string/key_passkey"
+        android:summary="@string/passkey_summary"
+        android:title="@string/passkey" />
+
+    <com.uprootlabs.trackme.MyEditTextPreference
+        android:defaultValue="@string/server_location_default"
+        android:dialogTitle="@string/server_location"
+        android:inputType="text"
+        android:key="@string/key_server_location"
+        android:summary="@string/server_location_summary"
+        android:title="@string/server_location" />
+
+    <com.uprootlabs.trackme.MyEditTextPreference
+        android:defaultValue="@string/session_id_default"
+        android:dialogTitle="@string/session_id"
+        android:inputType="text"
+        android:key="@string/key_session_id"
+        android:summary="@string/session_id_summary"
+        android:title="@string/session_id" />
+
+    <com.uprootlabs.trackme.MyEditTextPreference
+        android:defaultValue="@string/capture_frequency_default"
+        android:dialogTitle="@string/capture_frequency"
+        android:inputType="number"
+        android:key="@string/key_capture_frequency"
+        android:summary="@string/capture_frequency_summary"
+        android:title="@string/capture_frequency" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="@string/key_auto_update"
+        android:summary="@string/auto_update_summary"
+        android:title="@string/auto_update" />
+
+    <com.uprootlabs.trackme.MyEditTextPreference
+        android:defaultValue="@string/update_frequency_default"
+        android:dependency="@string/key_auto_update"
+        android:dialogTitle="@string/update_frequency"
+        android:inputType="number"
+        android:key="@string/key_update_frequency"
+        android:summary="@string/update_frequency_summary"
+        android:title="@string/update_frequency" />
+
+</PreferenceScreen>
