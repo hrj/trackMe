@@ -1,6 +1,6 @@
 package com.uprootlabs.trackme;
 
-public class SessionBatchTuple {
+final class SessionBatchTuple {
     final private String sessionID;
     final private int batchID;
 
