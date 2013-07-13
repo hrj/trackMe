@@ -1,0 +1,100 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <TextView
+        android:id="@+id/debug_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:text="Debug Screen"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/lable_total"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/debug_title"
+        android:layout_marginTop="16dp"
+        android:text="Total Capture" />
+
+    <TextView
+        android:id="@+id/value_total"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/lable_total"
+        android:layout_alignBottom="@id/lable_total"
+        android:layout_alignParentRight="true"
+        android:text="0" />
+
+    <TextView
+        android:id="@+id/lable_uploaded"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/lable_total"
+        android:layout_alignParentLeft="true"
+        android:text="Uploaded Locations" />
+
+    <TextView
+        android:id="@+id/value_uploaded"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/lable_uploaded"
+        android:layout_alignBottom="@id/lable_uploaded"
+        android:layout_alignParentRight="true"
+        android:text="0" />
+
+    <TextView
+        android:id="@+id/lable_archived"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/lable_uploaded"
+        android:text="Archived Locations" />
+
+    <TextView
+        android:id="@+id/value_archived"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignBaseline="@id/lable_archived"
+        android:layout_alignBottom="@id/lable_archived"
+        android:text="0" />
+
+    <TextView
+        android:id="@+id/lable_queued"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/lable_archived"
+        android:text="Queued Locations" />
+
+    <TextView
+        android:id="@+id/value_queued"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/lable_queued"
+        android:layout_alignBottom="@+d/lable_queued"
+        android:layout_alignParentRight="true"
+        android:text="0" />
+
+    <TextView
+        android:id="@+id/lable_sum"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/lable_queued"
+        android:text="Sum" />
+
+    <TextView
+        android:id="@+id/value_sum"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/lable_sum"
+        android:layout_alignBottom="@id/lable_sum"
+        android:layout_alignParentRight="true"
+        android:text="0" />
+
+</RelativeLayout>
