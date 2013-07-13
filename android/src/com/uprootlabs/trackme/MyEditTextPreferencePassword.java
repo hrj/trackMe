@@ -4,7 +4,7 @@ import android.content.Context;
 import android.preference.EditTextPreference;
 import android.util.AttributeSet;
 
-public class MyEditTextPreferencePassword extends EditTextPreference {
+final class MyEditTextPreferencePassword extends EditTextPreference {
 
   private String summary;
 

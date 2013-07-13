@@ -3,7 +3,7 @@ package com.uprootlabs.trackme;
 import android.content.Context;
 import android.content.Intent;
 
-public class UserError {
+final class UserError {
 
   public static Intent makeIntent(final Context context, final String message) {
     final Intent dialogIntent = new Intent(context, DialogActivity.class);

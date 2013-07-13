@@ -17,7 +17,7 @@ import org.xml.sax.SAXException;
 import android.net.ParseException;
 import android.util.Log;
 
-public class ResponseParsing {
+final class ResponseParsing {
 
   public static Document getDomElement(final String xml) {
     Document doc = null;

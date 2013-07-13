@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-public class MyPreference {
+final class MyPreference {
 
   SharedPreferences myPreferences;
   SharedPreferences.Editor myPreferencesEditor;

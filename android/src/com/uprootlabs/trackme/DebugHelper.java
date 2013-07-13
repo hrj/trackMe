@@ -7,7 +7,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-public class DebugHelper {
+final class DebugHelper {
   public static final String PREFERENCE_NAME = "debug";
   public static final String PREFERENCE_TOTAL_LOCATION_COUNT = "total";
   public static final String PREFERENCE_ARCHIVED_LOCATION_COUNT = "archived";
