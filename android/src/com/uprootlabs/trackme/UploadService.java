@@ -141,13 +141,15 @@ public final class UploadService extends Service {
     return null;
   }
 
-  public static boolean pendingIntentExists(final Context context, final Intent intent) {
+  public static boolean pendingIntentExists(final Context context) {
+    final Intent intent = new Intent(context, UploadService.class);
     final PendingIntent pi = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE);
     return (pi != null);
   }
 
-  public static void setAlarm(final Context context, final Intent intent, final int updateFrequency) {
-
+  public static void setUploadAlarm(final Context context, final String uploadType, final int updateFrequency) {
+    final Intent intent = new Intent(context, UploadService.class);
+    intent.putExtra(UPLOAD_TYPE, uploadType);
     final PendingIntent piAutoUpdate = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
     final int alarmType = AlarmManager.ELAPSED_REALTIME_WAKEUP;
     final AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
@@ -155,8 +157,9 @@ public final class UploadService extends Service {
     alarmManager.set(alarmType, SystemClock.elapsedRealtime() + updateFrequency, piAutoUpdate);
   }
 
-  public static void cancelAlarm(final Context context, final Intent intent) {
-    final PendingIntent piCancelAlarm = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+  public static void cancelUploadAlarm(final Context context) {
+    final Intent alarmIntent = new Intent(context, UploadService.class);
+    final PendingIntent piCancelAlarm = PendingIntent.getService(context, 0, alarmIntent, PendingIntent.FLAG_ONE_SHOT);
     piCancelAlarm.cancel();
   }
 
@@ -178,8 +181,7 @@ public final class UploadService extends Service {
     uploadTime = System.currentTimeMillis();
 
     if (uploadType.equals(CANCEL_ALARM)) {
-      final Intent alarmIntent = new Intent(this, UploadService.class);
-      cancelAlarm(this, alarmIntent);
+      cancelUploadAlarm(this);
     } else if (uploadType.equals(MANUAL_UPLOAD)) {
       uploadeSession();
     } else if (uploadType.equals(AUTO_UPLOAD)) {
@@ -211,14 +213,10 @@ public final class UploadService extends Service {
 
   private void setAutoUpdate() {
     if (myPreference.isAutoUpdateSet()) {
-      final Intent intent = new Intent(this, UploadService.class);
-      intent.putExtra(UPLOAD_TYPE, AUTO_UPLOAD);
-      Log.d(UPLOAD_SERVICE_TAG, "PI Exists " + pendingIntentExists(this, intent));
-      if (!pendingIntentExists(this, intent)) {
+      if (!pendingIntentExists(this)) {
         final int updateFrequence = myPreference.getUpdateFrequency();
-        setAlarm(this, intent, updateFrequence);
+        setUploadAlarm(this, AUTO_UPLOAD, updateFrequence);
       }
-      Log.d(UPLOAD_SERVICE_TAG, "PI Exists after" + pendingIntentExists(this, intent));
       Log.d(UPLOAD_SERVICE_TAG, "Auto Update Set");
     }
   }
@@ -270,8 +268,7 @@ public final class UploadService extends Service {
 
     if (!possible) {
       getApplication().startActivity(UserError.makeIntent(getBaseContext(), message.toString()));
-      final Intent alarmIntent = new Intent(this, UploadService.class);
-      cancelAlarm(this, alarmIntent);
+      cancelUploadAlarm(this);
     }
 
     return possible;
@@ -323,18 +320,15 @@ public final class UploadService extends Service {
     } else if (code == -1) {
       Log.d(UPLOAD_SERVICE_TAG, "Invalid" + " " + code);
       getApplication().startActivity(UserError.makeIntent(getBaseContext(), message));
-      final Intent alarmIntent = new Intent(this, UploadService.class);
-      cancelAlarm(this, alarmIntent);
+      cancelUploadAlarm(this);
       return false;
     } else if (code == 0) {
-      final Intent alarmIntent = new Intent(this, UploadService.class);
-      cancelAlarm(this, alarmIntent);
+      cancelUploadAlarm(this);
       return false;
     } else {
       message = "Invalid UserID or PassKey";
       getApplication().startActivity(UserError.makeIntent(getBaseContext(), message));
-      final Intent alarmIntent = new Intent(this, UploadService.class);
-      cancelAlarm(this, alarmIntent);
+      cancelUploadAlarm(this);
       return false;
     }
   }

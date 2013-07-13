@@ -192,12 +192,10 @@ public final class MainActivity extends Activity {
   private void startCapturingLocations() {
     if (myPreference.isAutoUpdateSet()) {
 
-      final Intent intent = new Intent(this, UploadService.class);
-      intent.putExtra(UploadService.UPLOAD_TYPE, UploadService.AUTO_UPLOAD);
       final int updateFrequency = myPreference.getUpdateFrequency();
 
-      if (!UploadService.pendingIntentExists(this, intent)) {
-        UploadService.setAlarm(this, intent, updateFrequency);
+      if (!UploadService.pendingIntentExists(this)) {
+        UploadService.setUploadAlarm(this, UploadService.MANUAL_UPLOAD, updateFrequency);
 
         Log.d(MAIN_ACTIVITY_TAG, "Auto Update Set");
       }
