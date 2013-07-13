@@ -12,7 +12,7 @@ public class MyPreferencesActivity extends PreferenceActivity {
     super.onCreate(savedInstanceState);
     addPreferencesFromResource(R.xml.preferences);
 
-    Preference.OnPreferenceChangeListener intChangePreferences = new Preference.OnPreferenceChangeListener() {
+    final Preference.OnPreferenceChangeListener intChangePreferences = new Preference.OnPreferenceChangeListener() {
 
       @Override
       public boolean onPreferenceChange(final Preference preference, final Object newValue) {

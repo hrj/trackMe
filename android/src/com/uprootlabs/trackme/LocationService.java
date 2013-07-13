@@ -3,6 +3,7 @@ package com.uprootlabs.trackme;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -171,7 +172,7 @@ public final class LocationService extends Service implements LocationListener, 
     Log.d(LOCATION_SERVICE_TAG, "stop Capturing");
     intent.putExtra(PARAM_LOCATION_SERVICE_STATUS, STATUS_WARMED_UP);
 
-    Intent uiIntent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_UI);
+    final Intent uiIntent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_UI);
     uiIntent.putExtra(LATITUDE, "");
     uiIntent.putExtra(LONGITUDE, "");
     uiIntent.putExtra(ACCURACY, "");
@@ -198,14 +199,14 @@ public final class LocationService extends Service implements LocationListener, 
     Log.d(LOCATION_SERVICE_TAG, "Locations Changed");
     db.insertNewLocations(location, timeStamp);
 
-    Date date = new Date(timeStamp);
-    DateFormat formatter = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
-    String dateFormatted = formatter.format(date);
+    final Date date = new Date(timeStamp);
+    final DateFormat formatter = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss", Locale.US);
+    final String dateFormatted = formatter.format(date);
 
-    DebugHelper updatePreferences = new DebugHelper(this);
+    final DebugHelper updatePreferences = new DebugHelper(this);
     updatePreferences.addCapturedCount();
 
-    Intent intent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_UI);
+    final Intent intent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_UI);
     intent.putExtra(LATITUDE, "" + location.getLatitude());
     intent.putExtra(LONGITUDE, "" + location.getLongitude());
     intent.putExtra(ACCURACY, "" + location.getAccuracy());

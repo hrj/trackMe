@@ -16,6 +16,7 @@
         <receiver android:name="com.uprootlabs.trackme.OnBoot" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
             </intent-filter>
         </receiver>
 

@@ -1,7 +1,6 @@
 package com.uprootlabs.trackme;
 
 import android.app.Activity;
-import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -10,7 +9,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.util.Log;
@@ -65,7 +63,6 @@ public final class MainActivity extends Activity {
           startStopButton.setEnabled(false);
         }
       } else if (broadcastAction.equals(MAIN_ACTIVITY_UPDATE_UI)) {
-        Log.d(MAIN_ACTIVITY_TAG, "updateUI broadcast");
         updateLocationDetails(intent);
         final String debugDetails = debugPreferences.getDebugDetails();
         debug.setText(debugDetails);
@@ -130,10 +127,10 @@ public final class MainActivity extends Activity {
   public void onResume() {
     super.onResume();
 
-    String captureFrequency = "" + (myPreference.getCaptureFrequency() / TrackMeHelper.MILLISECONDS_PER_SECOND) + "sec";
-    String updateFrequency = ""
+    final String captureFrequency = "" + (myPreference.getCaptureFrequency() / TrackMeHelper.MILLISECONDS_PER_SECOND) + "sec";
+    final String updateFrequency = ""
         + (myPreference.getUpdateFrequency() / TrackMeHelper.SECONDS_PER_MINUTE / TrackMeHelper.MILLISECONDS_PER_SECOND) + "min";
-    String sessionID = myPreference.getSessionID();
+    final String sessionID = myPreference.getSessionID();
     valueCaptureFrequency.setText(captureFrequency);
     valueUpdateFrequency.setText(updateFrequency);
     valueSessionID.setText(sessionID);
@@ -198,18 +195,13 @@ public final class MainActivity extends Activity {
       final Intent intent = new Intent(this, UploadService.class);
       intent.putExtra(UploadService.UPLOAD_TYPE, UploadService.AUTO_UPLOAD);
       final int updateFrequency = myPreference.getUpdateFrequency();
-      final long uploadTime = System.currentTimeMillis() + updateFrequency;
-      intent.putExtra(UploadService.UPLOAD_TIME, uploadTime);
-      if (!UploadService.pendingIntentExists(this, intent)) {
-        pi = PendingIntent.getService(this, 0, intent, 0);
-        final long timeOrLengthOfWait = updateFrequency;
-        final int alarmType = AlarmManager.ELAPSED_REALTIME_WAKEUP;
 
-        final AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.set(alarmType, SystemClock.elapsedRealtime() + timeOrLengthOfWait, pi);
+      if (!UploadService.pendingIntentExists(this, intent)) {
+        UploadService.setAlarm(this, intent, updateFrequency);
+
+        Log.d(MAIN_ACTIVITY_TAG, "Auto Update Set");
       }
 
-      Log.d(MAIN_ACTIVITY_TAG, "Auto Update Set");
     }
 
     final Intent intentStatus = new Intent(LocationService.ACTION_CAPTURE_LOCATIONS);
@@ -229,7 +221,7 @@ public final class MainActivity extends Activity {
 
   }
 
-  private void updateLocationDetails(Intent intent) {
+  private void updateLocationDetails(final Intent intent) {
     valueLat.setText(intent.getStringExtra(LocationService.LATITUDE));
     valueLng.setText(intent.getStringExtra(LocationService.LONGITUDE));
     valueAccuracy.setText(intent.getStringExtra(LocationService.ACCURACY));

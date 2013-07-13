@@ -40,7 +40,6 @@ public class ResponseParsing {
       Log.e("Error: ", e.getMessage());
       return null;
     }
-    // return DOM
     return doc;
   }
 

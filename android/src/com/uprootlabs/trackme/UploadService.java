@@ -91,14 +91,14 @@ public final class UploadService extends Service {
 
               if (e.getAttribute("accepted").equals("true")) {
                 Log.d(UPLOAD_SERVICE_TAG, "Boolean New " + e.getAttribute("accepted"));
-                int uploadedCount = db.moveLocationsToSessionTable(uploadID, sessionID, batchID);
+                final int uploadedCount = db.moveLocationsToSessionTable(uploadID, sessionID, batchID);
                 updatePreferences.addUploadedCount(uploadedCount);
-                Intent intent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_DEBUG_UI);
+                final Intent intent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_DEBUG_UI);
                 LocalBroadcastManager.getInstance(UploadService.this).sendBroadcast(intent);
               } else {
-                int archivedCount = db.archiveLocations(uploadID, sessionID, batchID);
+                final int archivedCount = db.archiveLocations(uploadID, sessionID, batchID);
                 updatePreferences.addArchivedCount(archivedCount);
-                Intent intent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_DEBUG_UI);
+                final Intent intent = new Intent(MainActivity.MAIN_ACTIVITY_UPDATE_DEBUG_UI);
                 LocalBroadcastManager.getInstance(UploadService.this).sendBroadcast(intent);
               }
 
@@ -123,6 +123,7 @@ public final class UploadService extends Service {
   private static final String UPLOAD_SERVICE_TAG = "uploadService";
   public static final String UPLOAD_TYPE = "uploadType";
   public static final String MANUAL_UPLOAD = "manual";
+  public static final String CANCEL_ALARM = "cancelAlarm";
   public static final String AUTO_UPLOAD = "auto";
   public static final String UPLOAD_TIME = "uploadTime";
   public static final int MAX_RETRY_COUNT = 5;
@@ -133,7 +134,6 @@ public final class UploadService extends Service {
   TrackMeDB db;
   MyPreference myPreference;
   private long uploadTime;
-  private PendingIntent piAutoUpdate;
   private boolean running = false;
 
   @Override
@@ -146,13 +146,18 @@ public final class UploadService extends Service {
     return (pi != null);
   }
 
-  public void setAlarm(final Context context, final PendingIntent pi) {
+  public static void setAlarm(final Context context, final Intent intent, final int updateFrequency) {
 
-    final long timeOrLengthOfWait = myPreference.getUpdateFrequency();
+    final PendingIntent piAutoUpdate = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
     final int alarmType = AlarmManager.ELAPSED_REALTIME_WAKEUP;
-
     final AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-    alarmManager.set(alarmType, SystemClock.elapsedRealtime() + timeOrLengthOfWait, pi);
+
+    alarmManager.set(alarmType, SystemClock.elapsedRealtime() + updateFrequency, piAutoUpdate);
+  }
+
+  public static void cancelAlarm(final Context context, final Intent intent) {
+    final PendingIntent piCancelAlarm = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+    piCancelAlarm.cancel();
   }
 
   @Override
@@ -170,22 +175,26 @@ public final class UploadService extends Service {
 
     String captureServiceStatus;
     final String uploadType = intent.getStringExtra(UPLOAD_TYPE);
-
     uploadTime = System.currentTimeMillis();
-    if (uploadType.equals(MANUAL_UPLOAD)) {
+
+    if (uploadType.equals(CANCEL_ALARM)) {
+      final Intent alarmIntent = new Intent(this, UploadService.class);
+      cancelAlarm(this, alarmIntent);
+    } else if (uploadType.equals(MANUAL_UPLOAD)) {
+      uploadeSession();
     } else if (uploadType.equals(AUTO_UPLOAD)) {
-      Log.d(UPLOAD_SERVICE_TAG, "auto time " + uploadTime + " sys " + System.currentTimeMillis());
 
       final Intent intentStatus = new Intent(LocationService.ACTION_QUERY_STATUS_UPLOAD_SERVICE);
       LocalBroadcastManager.getInstance(this).sendBroadcastSync(intentStatus);
 
       captureServiceStatus = intentStatus.getStringExtra(LocationService.PARAM_LOCATION_SERVICE_STATUS);
-      if (captureServiceStatus != null && captureServiceStatus.equals(LocationService.STATUS_CAPTURING_LOCATIONS)) {
+
+      if (LocationService.STATUS_CAPTURING_LOCATIONS.equals(captureServiceStatus) | db.getQueuedLocationsCount(uploadTime) > 0) {
         setAutoUpdate();
       }
-    }
 
-    uploadeSession();
+      uploadeSession();
+    }
 
     Log.d(UPLOAD_SERVICE_TAG, "exiting service");
     return Service.START_NOT_STICKY;
@@ -204,8 +213,12 @@ public final class UploadService extends Service {
     if (myPreference.isAutoUpdateSet()) {
       final Intent intent = new Intent(this, UploadService.class);
       intent.putExtra(UPLOAD_TYPE, AUTO_UPLOAD);
-      piAutoUpdate = PendingIntent.getService(this, 0, intent, 0);
-      setAlarm(this, piAutoUpdate);
+      Log.d(UPLOAD_SERVICE_TAG, "PI Exists " + pendingIntentExists(this, intent));
+      if (!pendingIntentExists(this, intent)) {
+        final int updateFrequence = myPreference.getUpdateFrequency();
+        setAlarm(this, intent, updateFrequence);
+      }
+      Log.d(UPLOAD_SERVICE_TAG, "PI Exists after" + pendingIntentExists(this, intent));
       Log.d(UPLOAD_SERVICE_TAG, "Auto Update Set");
     }
   }
@@ -230,7 +243,7 @@ public final class UploadService extends Service {
     final boolean userValidation = myPreference.userDetailsNotNull();
     final boolean serverLocationValidation = myPreference.serverLocationSet();
     final boolean dbValidation = db.getQueuedLocationsCount(uploadTime) > 0;
-    final boolean networkValidation = isNetworkAvailable();
+    final boolean networkValidation = isNetworkAvailable(this);
     boolean possible = true;
     final StringBuffer message = new StringBuffer();
     message.append("Upload not possible due to : ");
@@ -257,13 +270,15 @@ public final class UploadService extends Service {
 
     if (!possible) {
       getApplication().startActivity(UserError.makeIntent(getBaseContext(), message.toString()));
+      final Intent alarmIntent = new Intent(this, UploadService.class);
+      cancelAlarm(this, alarmIntent);
     }
 
     return possible;
   }
 
-  private boolean isNetworkAvailable() {
-    final ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+  public static boolean isNetworkAvailable(final Context context) {
+    final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
     final NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     final boolean connected = (activeNetworkInfo != null && activeNetworkInfo.isConnected());
     return connected;
@@ -294,8 +309,8 @@ public final class UploadService extends Service {
       e.printStackTrace();
       final Intent intentNotification = new Intent(this, MainActivity.class);
       final PendingIntent pi = PendingIntent.getActivity(this, 1, intentNotification, 0);
-      NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-      Notification notification = new Notification(R.drawable.ic_launcher, "Upload Failed", System.currentTimeMillis());
+      final NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+      final Notification notification = new Notification(R.drawable.ic_launcher, "Upload Failed", System.currentTimeMillis());
       notification.setLatestEventInfo(this, "UploadFailed", "Unknown Server Error", pi);
       notification.flags |= Notification.FLAG_AUTO_CANCEL;
       notificationManager.notify(9, notification);
@@ -308,12 +323,18 @@ public final class UploadService extends Service {
     } else if (code == -1) {
       Log.d(UPLOAD_SERVICE_TAG, "Invalid" + " " + code);
       getApplication().startActivity(UserError.makeIntent(getBaseContext(), message));
+      final Intent alarmIntent = new Intent(this, UploadService.class);
+      cancelAlarm(this, alarmIntent);
       return false;
     } else if (code == 0) {
+      final Intent alarmIntent = new Intent(this, UploadService.class);
+      cancelAlarm(this, alarmIntent);
       return false;
     } else {
       message = "Invalid UserID or PassKey";
       getApplication().startActivity(UserError.makeIntent(getBaseContext(), message));
+      final Intent alarmIntent = new Intent(this, UploadService.class);
+      cancelAlarm(this, alarmIntent);
       return false;
     }
   }
