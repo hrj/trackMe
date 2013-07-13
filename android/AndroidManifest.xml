@@ -13,6 +13,13 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+        <receiver android:name="com.uprootlabs.trackme.OnBoot" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name="com.uprootlabs.trackme.MainActivity"
             android:label="@string/app_name" >
@@ -27,10 +34,9 @@
             android:label="Settings" />
 
         <service
-            android:name="com.uprootlabs.trackme.GetLocationService"
+            android:name="com.uprootlabs.trackme.LocationService"
             android:enabled="true" >
         </service>
-
         <service
             android:name="com.uprootlabs.trackme.UploadService"
             android:enabled="true" >
@@ -38,11 +44,21 @@
 
         <activity
             android:name="com.uprootlabs.trackme.DialogActivity"
-            android:label="@string/title_activity_dialog" >
+            android:label="@string/title_activity_dialog"
+            android:theme="@android:style/Theme.Dialog" >
+        </activity>
+        <activity
+            android:name="com.uprootlabs.trackme.DebugActivity"
+            android:label="@string/title_activity_debug" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.uprootlabs.trackme.MainActivity" />
         </activity>
     </application>
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
 </manifest>

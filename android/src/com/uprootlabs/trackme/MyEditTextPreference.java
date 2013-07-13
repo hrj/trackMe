@@ -4,24 +4,24 @@ import android.content.Context;
 import android.preference.EditTextPreference;
 import android.util.AttributeSet;
 
-public class MyEditTextPreference extends EditTextPreference {
+final class MyEditTextPreference extends EditTextPreference {
   private String summary;
 
-  public MyEditTextPreference(Context context) {
+  public MyEditTextPreference(final Context context) {
     super(context);
     // TODO Auto-generated constructor stub
   }
   
-  public MyEditTextPreference(Context context, AttributeSet attrs){
+  public MyEditTextPreference(final Context context, final AttributeSet attrs){
     super(context, attrs);
     summary = getSummary().toString();
   }
 
-  public MyEditTextPreference(Context context, AttributeSet attrs, int defStyle){
+  public MyEditTextPreference(final Context context, final AttributeSet attrs, final int defStyle){
     super(context, attrs, defStyle);
   }
 
- public void setText(String text){
+ public void setText(final String text){
    super.setText(text);
    if(text.length() > 0) setSummary(text);
    else setSummary(summary);
