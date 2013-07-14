@@ -53,7 +53,7 @@ public final class UploadService extends Service {
           final String locations = db.getLocationsAsXML(uploadTime);
           Log.d(UPLOAD_SERVICE_TAG, locations);
           final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
-          final HttpPost httpPost = new HttpPost(serverURL + "store");
+          final HttpPost httpPost = new HttpPost(serverURL + "/api/v1/xml/store");
           GzipHelper.setCompressedEntity(UploadService.this, locations, httpPost);
           httpPost.addHeader("userid", userID);
           httpPost.addHeader("passkey", passKey);
@@ -143,7 +143,7 @@ public final class UploadService extends Service {
 
   public static boolean pendingIntentExists(final Context context) {
     final Intent intent = new Intent(context, UploadService.class);
-    final PendingIntent pi = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE);
+    final PendingIntent pi = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_ONE_SHOT);
     return (pi != null);
   }
 
@@ -155,6 +155,8 @@ public final class UploadService extends Service {
     final AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
     alarmManager.set(alarmType, SystemClock.elapsedRealtime() + updateFrequency, piAutoUpdate);
+
+    Log.d(UPLOAD_SERVICE_TAG, "Auto Update Set");
   }
 
   public static void cancelUploadAlarm(final Context context) {
@@ -217,7 +219,6 @@ public final class UploadService extends Service {
         final int updateFrequence = myPreference.getUpdateFrequency();
         setUploadAlarm(this, AUTO_UPLOAD, updateFrequence);
       }
-      Log.d(UPLOAD_SERVICE_TAG, "Auto Update Set");
     }
   }
 
@@ -283,7 +284,7 @@ public final class UploadService extends Service {
 
   private boolean userAuthenticated(final String userID, final String passKey, final String serverURL) {
     final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
-    final HttpGet httpGet = new HttpGet(serverURL + "validate");
+    final HttpGet httpGet = new HttpGet(serverURL + "/api/v1/xml/validate");
     httpGet.addHeader("userid", userID);
     httpGet.addHeader("passkey", passKey);
     int code = -1;
