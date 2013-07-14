@@ -1,24 +1,12 @@
 package com.uproot.trackme
 
-import java.util.ArrayList
-import java.util.zip.GZIPInputStream
-import scala.Option.option2Iterable
-import scala.collection.JavaConverters.asScalaBufferConverter
-import scala.collection.JavaConverters.iterableAsScalaIterableConverter
-import scala.collection.JavaConverters.seqAsJavaListConverter
 import com.google.appengine.api.datastore.DatastoreServiceFactory
-import com.google.appengine.api.datastore.Entity
-import com.google.appengine.api.datastore.FetchOptions
-import com.google.appengine.api.datastore.KeyFactory
-import com.google.appengine.api.datastore.Query
-import com.google.appengine.api.datastore.Query.FilterOperator
-import com.google.appengine.api.datastore.Query.FilterPredicate
-import com.google.appengine.api.datastore.Query.SortDirection
-import com.google.appengine.api.users.UserServiceFactory
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo
 import com.google.appengine.api.datastore.EntityNotFoundException
+import com.google.appengine.api.datastore.Key
+import com.google.appengine.api.datastore.KeyFactory
+import com.google.appengine.api.users.UserServiceFactory
+
+import javax.servlet.http.HttpServletRequest
 case class MenuEntry(title: String, icon: String, url: String)
 class Menu(entries: Seq[MenuEntry]) {
 
@@ -61,14 +49,14 @@ class CommonFunctions(req: HttpServletRequest) {
   }
 
   private def checkPassKey = {
-    if (req.getHeader(USER_ID) != null && req.getHeader(PASS_KEY) != null) {
-      val userId = req.getHeader(USER_ID)
-      val passKey = req.getHeader(PASS_KEY)
-      val userKey = KeyFactory.createKey(USER_DETAILS, userId)
+    if (req.getHeader(XML_ATTRIBUTE_USER_ID) != null && req.getHeader(XML_ATTRIBUTE_PASS_KEY) != null) {
+      val userId = req.getHeader(XML_ATTRIBUTE_USER_ID)
+      val passKey = req.getHeader(XML_ATTRIBUTE_PASS_KEY)
+      val userKey = KeyFactory.createKey(KIND_USER_DETAILS, userId)
       try {
         val userEntity = datastore.get(userKey)
-        val dsUserID = userEntity.getProperty("userID")
-        val dsPassKey = userEntity.getProperty("passKey")
+        val dsUserID = userEntity.getProperty(COLUMN_USER_ID)
+        val dsPassKey = userEntity.getProperty(COLUMN_PASS_KEY)
         if (dsUserID == userId && dsPassKey == passKey) {
           true
         } else {
@@ -87,7 +75,7 @@ class CommonFunctions(req: HttpServletRequest) {
       val currUserId = userPrincipal.getName
       f(new LoggedIn(currUserId, req))
     } else if (checkPassKey) {
-      val currUserId = req.getHeader(USER_ID)
+      val currUserId = req.getHeader(XML_ATTRIBUTE_USER_ID)
       f(new LoggedIn(currUserId, req))
     } else {
       format match {
@@ -98,23 +86,66 @@ class CommonFunctions(req: HttpServletRequest) {
   }
 
 }
+
 object Helper {
 
-  val USER_ID = "userID"
-  val PASS_KEY = "passKey"
-  val LOCATIONS = "locations"
-  val SHARED_WITH = "sharedWith"
-  val VERSION_NO = "versionNo"
+  val KIND_USER_DETAILS = "userDetails"
+  val COLUMN_USER_ID = "userID"
+  val COLUMN_PASS_KEY = "passKey"
+  val COLUMN_SHARED_WITH = "sharedWith"
+  val COLUMN_VERSION_NO = "versionNo"
+  val KIND_SESSIONS = "sessions"
+  val COLUMN_SESSION_ID = "sessionID"
+  val KIND_BATCHES = "batches"
+  val COLUMN_BATCH_ID = "batchID"
+  val KIND_LOCATIONS = "locations"
+  val COLUMN_LATITUDE = "latitude"
+  val COLUMN_LONGITUDE = "longitude"
+  val COLUMN_ACCURACY = "accuracy"
+  val COLUMN_TIME_STAMP = "timestamp"
+  val XML_TAG_BATCH = "batch"
+  val XML_TAG_LOCATION = "loc"
+  val XML_ATTRIBUTE_UPLOAD_ID = "uid"
+  val XML_ATTRIBUTE_SESSION_ID = "sid"
+  val XML_ATTRIBUTE_BATCH_ID = "bid"
+  val XML_ATTRIBUTE_USER_ID = "userid"
+  val XML_ATTRIBUTE_PASS_KEY = "passkey"
+  val XML_ATTRIBUTE_LATITUDE = "lat"
+  val XML_ATTRIBUTE_LONGITUDE = "lng"
+  val XML_ATTRIBUTE_ACCURACY = "acc"
+  val XML_ATTRIBUTE_TIME_STAMP = "ts"
+  val PARAM_VERSION_NO = "versionNo";
+  val PARAM_SHARE_WITH = "shareWith"
+  val PARAM_PASS_KEY = "passKey"
   val FILE_NOT_FOUND = <p>File Not Found</p>
   val GRACE_PERIOD = 3600000
-  val USER_DETAILS = "userDetails"
-    val LOCATIONS_LIMIT = 100
+  val LOCATIONS_LIMIT = 1000
   val datastore = DatastoreServiceFactory.getDatastoreService
 
   def userExistsFunc(userId: String) = {
     try {
-      val userKey = KeyFactory.createKey(USER_DETAILS, userId)
+      val userKey = KeyFactory.createKey(KIND_USER_DETAILS, userId)
       datastore.get(userKey)
+      true
+    } catch {
+      case _: IllegalArgumentException | _: EntityNotFoundException => false
+    }
+  }
+
+  def sessionExistsFunc(userId: String, sessionId: String) = {
+    try {
+      val sessionKey = mkSessionKey(mkUserKey(userId), sessionId)
+      datastore.get(sessionKey)
+      true
+    } catch {
+      case _: IllegalArgumentException | _: EntityNotFoundException => false
+    }
+  }
+
+  def batchExistsFunc(userId: String, sessionId: String, batchId: Int) = {
+    try {
+      val batchKey = mkBatchKey(mkSessionKey(mkUserKey(userId), sessionId), batchId)
+      datastore.get(batchKey)
       true
     } catch {
       case _: IllegalArgumentException | _: EntityNotFoundException => false
@@ -126,7 +157,15 @@ object Helper {
   }
 
   def mkUserKey(userId: String) = {
-    KeyFactory.createKey(USER_DETAILS, userId)
+    KeyFactory.createKey(KIND_USER_DETAILS, userId)
+  }
+
+  def mkSessionKey(userKey: Key, sessionId: String) = {
+    KeyFactory.createKey(userKey, KIND_SESSIONS, sessionId)
+  }
+
+  def mkBatchKey(sessionKey: Key, batchId: Int) = {
+    KeyFactory.createKey(sessionKey, KIND_BATCHES, batchId)
   }
 
   def createTemplate(menu: xml.Node, userName: String, body: xml.Node, jScript: Option[String] = None, logoutURL: String) = {
@@ -150,7 +189,7 @@ object Helper {
           <div class="row-fluid">
             <div class="span2">
               <h3>TrackMe</h3>
-              <i class="icon-user"></i> { userName }
+              <i class="icon-user"></i>{ userName }
               { menu }
             </div>
             { body }
