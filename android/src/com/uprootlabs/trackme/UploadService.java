@@ -53,7 +53,7 @@ public final class UploadService extends Service {
           final String locations = db.getLocationsAsXML(uploadTime);
           Log.d(UPLOAD_SERVICE_TAG, locations);
           final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
-          final HttpPost httpPost = new HttpPost(serverURL + "/api/xml/store");
+          final HttpPost httpPost = new HttpPost(serverURL + "/api/v1/xml/store");
           GzipHelper.setCompressedEntity(UploadService.this, locations, httpPost);
           httpPost.addHeader("userid", userID);
           httpPost.addHeader("passkey", passKey);
@@ -283,7 +283,7 @@ public final class UploadService extends Service {
 
   private boolean userAuthenticated(final String userID, final String passKey, final String serverURL) {
     final AndroidHttpClient http = AndroidHttpClient.newInstance("TrackMe");
-    final HttpGet httpGet = new HttpGet(serverURL + "/api/xml/validate");
+    final HttpGet httpGet = new HttpGet(serverURL + "/api/v1/xml/validate");
     httpGet.addHeader("userid", userID);
     httpGet.addHeader("passkey", passKey);
     int code = -1;

@@ -55,7 +55,7 @@ class TrackMeServlet extends HttpServlet {
           }
         }
       }
-      case "api" :: format :: operation :: Nil => {
+      case "api" :: "v1" :: format :: operation :: Nil => {
         common.apiAuthentication(format, { loggedIn =>
           operation match {
             case "retrieve" => loggedIn.retrieveLocations
@@ -83,7 +83,7 @@ class TrackMeServlet extends HttpServlet {
           }
         }
       }
-      case "api" :: format :: operation :: Nil => {
+      case "api" :: "v1" :: format :: operation :: Nil => {
         common.apiAuthentication(format, { loggedIn =>
           operation match {
             case "store" => loggedIn.storeLocations
