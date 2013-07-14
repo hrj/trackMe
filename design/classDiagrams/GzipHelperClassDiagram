@@ -1,0 +1,8 @@
+@startuml
+class GzipHelper {
+  +{static}String streamToString(InputStream content)
+  +{static}void setEntity(String content, HttpPost postReq)
+  +{static}void setCompressedEntity(Context context, String content, HttpPost postReq)
+  +{static}String getIfCompressed(HttpResponse response)
+}
+@enduml

@@ -1,0 +1,48 @@
+@startuml
+title Upload Process
+start
+if (userID, passKey and server location != null) then (true)
+	:Manual Upload or Auto Upload; 
+	if (Manual/Auto) then (Manual)
+		:uploadTime = currentTime);
+	else (Auto)
+		:uploadTime = Time set in Intent;
+		:setAlarm at currentTime + updateFrequency;
+	endif
+	if (user valid) then (no)
+			:diaplay error meaasge;
+			stop
+	else (yes)
+		:locationCount = getQueuedLocationsCount();
+		while (locationCount > 0)
+			:getLocationsAsXML(uploadTime);
+			:getLocations() \nFor all locatoins whose \ntimeStamp < uploadTime, \nsortOrder ASC Limit = 700;
+			:getLastBatchID() for all the \nsessiondIDs in this batch of locations\n and updateBatchID();
+			:assignUploadID;
+			:parse all the locations \nin XML formate as specified;
+			:compress XML;
+			:retry = true;
+			while (retry and retryCount < MAX_RETRY)
+				:prepare an http object and send;
+				:wait for response from server;
+				:read Status code from the server;
+				if (connection timeout or could not connect to server) then (yes)
+				  :retryCount -= 1;
+				else (no)
+					if (locations stored successfully) then (yes)
+						:moveLocations();
+					else (no)
+						:erroneous upload batch;
+					endif
+					:retry = false;
+				endif
+			endwhile
+
+			stop
+			:locationCount = getQueuedLocationsCount();
+		endwhile
+		stop
+	endif
+	else (false)
+		stop
+@enduml
