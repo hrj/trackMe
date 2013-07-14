@@ -1,0 +1,12 @@
+@startuml
+class DialogActivity {
+  #void onCreate(Bundle savedInstanceState)
+  +void onResume()
+  +void onPause()
+  +void onDestroy()
+}
+class Activity {
+}
+Activity <|-- DialogActivity
+@enduml
+

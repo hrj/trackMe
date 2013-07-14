@@ -1,0 +1,25 @@
+@startuml
+class MainActivity {
+	+{static}String MAIN_ACTIVITY_LOCATION_SERVICE_STATUS
+	~SharedPreferences myPreferences
+	~SharedPreferences.Editor myPreferencesEditor
+	~PendingIntent pi
+	-BroadcastReceiver broadCastReceiverMainActivity
+	#void onCreate(Bundle savedInstanceState)
+	+void onStart()
+	+void onPause()
+	+void onResume()
+	+boolean onCreateOptionsMenu(Menu menu)
+	+boolean onOptionsItemSelected(MenuItem item)
+	+void startStopCapturing(View v)
+	-void startServiceWarmUp()
+	-void startCapturingLocations()
+	-void showErrorDialog()
+	+void uploadLocations(View v)
+	-void stopCapturingLocations()
+	#void onStop()
+}
+class Activity {
+}
+Activity <|-- MainActivity
+@enduml

@@ -1,0 +1,36 @@
+@startuml
+hide footbox
+title Sequence Diagram Stop Capturing Locations
+actor User as U
+participant MaintActivity as MA
+participant CaptureService as CS
+participant LocationManager as LM 
+activate CS 
+activate LM
+create MA
+U -> MA: Start app
+activate MA
+LM --> CS: new location
+MA --> U: Display Home Screen
+MA -> MA: Register BroadCast Receiver
+MA -> CS: Check for CaptureService Status
+LM --> CS: new location
+CS --> MA: Status Capturing
+MA -> MA: enable buttons
+MA --> U: Display updated UI
+LM --> CS: new location
+U -> MA: Stop Capturing Locations
+MA -> CS: BroadCast message to stop Capturing Locations
+CS -> LM: Disconnect Location Manager
+deactivate LM
+destroy LM
+CS -> CS: remove foreground service
+note over CS: background service
+CS --> MA: Status WarmedUP
+U -> MA: Close app
+MA -> CS: Destroy
+deactivate CS
+destroy CS
+deactivate MA
+destroy MA
+@enduml
