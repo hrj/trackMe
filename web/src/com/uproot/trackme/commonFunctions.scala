@@ -96,7 +96,7 @@ object Helper {
   val COLUMN_VERSION_NO = "versionNo"
   val KIND_SESSIONS = "sessions"
   val COLUMN_SESSION_ID = "sessionID"
-  val KIND_BATCHES = "batchs"
+  val KIND_BATCHES = "batches"
   val COLUMN_BATCH_ID = "batchID"
   val KIND_LOCATIONS = "locations"
   val COLUMN_LATITUDE = "latitude"
@@ -114,9 +114,12 @@ object Helper {
   val XML_ATTRIBUTE_LONGITUDE = "lng"
   val XML_ATTRIBUTE_ACCURACY = "acc"
   val XML_ATTRIBUTE_TIME_STAMP = "ts"
+  val PARAM_VERSION_NO = "versionNo";
+  val PARAM_SHARE_WITH = "shareWith"
+  val PARAM_PASS_KEY = "passKey"
   val FILE_NOT_FOUND = <p>File Not Found</p>
   val GRACE_PERIOD = 3600000
-  val LOCATIONS_LIMIT = 100
+  val LOCATIONS_LIMIT = 1000
   val datastore = DatastoreServiceFactory.getDatastoreService
 
   def userExistsFunc(userId: String) = {

@@ -87,9 +87,9 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
   }
 
   def updateSettings() = {
-    val updateVersionNo = req.getParameter("versionNo").toLong
-    val passKey = req.getParameter("passKey")
-    val shareWith = req.getParameter("shareWith")
+    val updateVersionNo = req.getParameter(PARAM_VERSION_NO).toLong
+    val passKey = req.getParameter(PARAM_PASS_KEY)
+    val shareWith = req.getParameter(PARAM_SHARE_WITH)
     val usersSharingWith = shareWith.split(",").toList.filter(_.length != 0)
     val (validUsers, invalidUsers) = usersSharingWith.partition(userExistsFunc(_))
     val userKey = mkUserKey(currUserId)
@@ -131,7 +131,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
             alert
           }.getOrElse(xml.Null)
         }
-        <input type="hidden" name="versionNo" value={ versionNo.toString }/>
+        <input type="hidden" name={ PARAM_VERSION_NO } value={ versionNo.toString }/>
         <div class="control-group">
           <label class="control-label" for="userId">UserId </label>
           <div class="controls">
@@ -143,7 +143,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
             Pass Key
           </label>
           <div class="controls">
-            <input id="passKey" type="text" name="passKey" value={ passKey }/>
+            <input id="passKey" type="text" name={ PARAM_PASS_KEY } value={ passKey }/>
           </div>
         </div>
         <div class="control-group">
@@ -151,7 +151,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
             Share With
           </label>
           <div class="controls">
-            <input id="shareWith" type="text" name="shareWith" value={ sharedWith }/>
+            <input id="shareWith" type="text" name={ PARAM_SHARE_WITH } value={ sharedWith }/>
           </div>
         </div>
         <div class="control-group">
@@ -268,11 +268,11 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
           val sessionKey = mkSessionKey(userKey, sid)
           val batchKey = mkBatchKey(sessionKey, bid)
 
-          val sessionEntity = new Entity(sessionKey)
+          val sessionEntity = new Entity(KIND_SESSIONS, sessionKey)
           sessionEntity.setProperty(COLUMN_SESSION_ID, sid)
           datastore.put(sessionEntity)
 
-          val batchEntity = new Entity(batchKey)
+          val batchEntity = new Entity(KIND_BATCHES, batchKey)
           batchEntity.setProperty(COLUMN_BATCH_ID, bid)
           datastore.put(batchEntity)
 
@@ -315,12 +315,12 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
   private def getLastLocations(userId: String) = {
     sharedFrom(userId).flatMap { sharerId =>
       val userKey = mkUserKey(sharerId)
-      val userQuery = new Query(KIND_LOCATIONS).setAncestor(userKey) addSort ("timeStamp", SortDirection.DESCENDING)
+      val userQuery = new Query(KIND_LOCATIONS).setAncestor(userKey) addSort (COLUMN_TIME_STAMP, SortDirection.DESCENDING)
       val usersLastLocation = ((datastore.prepare(userQuery)).asList(FetchOptions.Builder.withLimit(1))).asScala.headOption
       usersLastLocation.map { location =>
-        val latLong = LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double])
-        val timeStamp = location.getProperty("timeStamp").asInstanceOf[Long]
-        val accuracy = location.getProperty("accuracy").asInstanceOf[Long]
+        val latLong = LatLong(location.getProperty(COLUMN_LATITUDE).asInstanceOf[Double], location.getProperty(COLUMN_LONGITUDE).asInstanceOf[Double])
+        val timeStamp = location.getProperty(COLUMN_TIME_STAMP).asInstanceOf[Long]
+        val accuracy = location.getProperty(COLUMN_ACCURACY).asInstanceOf[Long]
         (sharerId, Location(latLong, accuracy, timeStamp))
       }
     }
@@ -328,12 +328,13 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
 
   private def getLocations(userId: String) = {
     val userKey = mkUserKey(userId)
-    val query = new Query(KIND_LOCATIONS).setAncestor(userKey) addSort ("timeStamp", SortDirection.DESCENDING)
+    val query = new Query(KIND_LOCATIONS).setAncestor(userKey) addSort (COLUMN_TIME_STAMP, SortDirection.DESCENDING)
     val locations = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(LOCATIONS_LIMIT)).asScala
+    println(locations.length)
     (locations.map { location =>
-      val latLong = LatLong(location.getProperty("latitude").asInstanceOf[Double], location.getProperty("longitude").asInstanceOf[Double])
-      val timeStamp = location.getProperty("timeStamp").asInstanceOf[Long]
-      val accuracy = location.getProperty("accuracy").asInstanceOf[Long]
+      val latLong = LatLong(location.getProperty(COLUMN_LATITUDE).asInstanceOf[Double], location.getProperty(COLUMN_LONGITUDE).asInstanceOf[Double])
+      val timeStamp = location.getProperty(COLUMN_TIME_STAMP).asInstanceOf[Long]
+      val accuracy = location.getProperty(COLUMN_ACCURACY).asInstanceOf[Long]
       (Location(latLong, accuracy, timeStamp)).mkJSON
     }).mkString("\"locations\":[", ",", "]")
   }
