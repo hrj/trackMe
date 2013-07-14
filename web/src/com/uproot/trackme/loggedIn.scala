@@ -238,7 +238,7 @@ class LoggedIn(currUserId: String, req: HttpServletRequest) {
         xml.Group(Seq(<div class="span7">
                         { mapElem }{ refreshButton }
                       </div>,
-          getSharingDetails(currUserId))), Some("var retrieveURL = \"/api/json/retrieve\";" + "var curUser = \"" + currUserId + "\";")))
+          getSharingDetails(currUserId))), Some("var retrieveURL = \"/api/v1/json/retrieve\";" + "var curUser = \"" + currUserId + "\";")))
 
     } else {
       Redirect("/web/settings")
