@@ -1,0 +1,70 @@
+@startuml
+
+class MainActivity {
+	+{static}String MAIN_ACTIVITY_LOCATION_SERVICE_STATUS
+	~SharedPreferences myPreferences
+	~SharedPreferences.Editor myPreferencesEditor
+	~PendingIntent pi
+	-BroadcastReceiver broadCastReceiverMainActivity
+	#void onCreate(Bundle savedInstanceState)
+	+void onStart()
+	+void onPause()
+	+void onResume()
+	+boolean onCreateOptionsMenu(Menu menu)
+	+boolean onOptionsItemSelected(MenuItem item)
+	+void startStopCapturing(View v)
+	-void startServiceWarmUp()
+	-void startCapturingLocations()
+	-void showErrorDialog()
+	+void uploadLocations(View v)
+	-void stopCapturingLocations()
+	#void onStop()
+}
+class Activity {
+}
+Activity <|-- MainActivity
+
+class DialogActivity {
+  #void onCreate(Bundle savedInstanceState)
+  +void onResume()
+  +void onPause()
+  +void onDestroy()
+}
+class Activity {
+}
+Activity <|-- DialogActivity
+
+class TrackMeDB {
+	-SQLiteDatabase db
+	-String LOCATIONS_QUERY_LIMIT
+	+TrackMeDB(SQLiteDatabase db, Context context)
+	+boolean insertLocations(Location location, long timeStamp)
+	-Cursor getLocations(String selection, String[] selectionArgs, String orderBy, String limit)
+	+Cursor getLocationsByUploadID(int uploadID)
+	+StringBuffer getLocationsAsXML(long time)
+	+int getQueuedLocationsCount()
+	+void assignUploadID(int uploadID)
+	+void updateBatchIDs(List<String> sessionID, List<String> batchIDs, int uploadID)
+	-String getLastBatchID(String sessionID)
+	+List<String> getNewBatchIDs(List<String> sessionIDs)
+	+void moveLocations(int uploadID, List<String> sessions)
+	-List<String> getSessoinIDs(int uploadID, Cursor cursor)
+	-StringBuffer parseXML(Cursor c)
+	+void clearUploadIDs()
+}
+
+class MyPreference {
+	~SharedPreferences myPreferences
+	+MyPreference(Context context)
+	+boolean userDetailsNotNull()
+	+String getUserID()
+	+String getPassKey()
+	-String getSessionID()
+	+String getServerLocation()
+	+int getCaptureFrequency()
+	+int getUpdateFrequency()
+	+boolean isAutoUpdateSet()
+	+String getNewSessionID()
+	+int getNewUploadID()
+}
+@enduml

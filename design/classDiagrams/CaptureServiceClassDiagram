@@ -1,0 +1,40 @@
+@startuml
+class LocationService {
+	+{static}String ACTION_CAPTURE_LOCATIONS
+	+{static}String ACTION_STOP_CAPTURIGN_LOCATIONS
+	+{static}String ACTION_QUERY_STATUS_MAIN_ACTIVITY
+	+{static}String ACTION_QUERY_STATUS_UPLOAD_SERVICE
+	+{static}String ERROR_CAPTURING_LOCATIONS
+	+{static}String ERROR_STARTING_SERVICE
+	+{static}String PARAM_LOCATION_SERVICE_STATUS
+	+{static}String STATUS_CAPTURING_LOCATIONS
+	+{static}String STATUS_WARMED_UP
+	-BroadcastReceiver broadCastReceiverLocationService
+	+void onCreate()
+	+IBinder onBind(Intent intent)
+	+int onStartCommand(Intent intent, int flags, int startId)
+	-void warmUpService()
+	-void startCapture(Intent intent)
+	-void captureLocations(Intent intent)
+	-void setForegroundService()
+	-void stopCapturing(Intent intent)
+	+void onDestroy()
+	+void onLocationChanged(Location location)
+	-boolean servicesConnected()
+	+void onConnectionFailed(ConnectionResult connectionResult)
+	+void onConnected(Bundle bundle)
+	+void onDisconnected()
+}
+abstract class Service {
+}
+Service <|-- LocationService
+interface LocationListener {
+}
+LocationListener <|.. LocationService
+interface "GooglePlayServicesClient.ConnectionCallbacks" as GooglePlayServicesClient_ConnectionCallbacks {
+}
+GooglePlayServicesClient_ConnectionCallbacks <|.. LocationService
+interface "GooglePlayServicesClient.OnConnectionFailedListener" as GooglePlayServicesClient_OnConnectionFailedListener {
+}
+GooglePlayServicesClient_OnConnectionFailedListener <|.. LocationService
+@enduml

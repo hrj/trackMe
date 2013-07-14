@@ -1,0 +1,57 @@
+@startuml
+title Sequence Diagram Start Capturing Locations
+actor User as U
+participant MaintActivity as MA
+participant CaptureService as CS
+participant PlayService as PS
+participant LocationManager as LM 
+create MA
+U -> MA: Start app
+activate MA
+MA --> U: Display Home Screen
+MA -> MA: Register BroadCast Receiver
+MA ->]: Check for Capture service Status
+MA <-]: Capture Service not running
+create CS
+MA ->> CS: Start Capture Service 
+activate CS
+CS -> CS: Register BroadCast Receiver
+CS -> PS: isPlayServiceAvailable()
+activate PS
+PS -> CS: yes
+deactivate PS
+CS -> LM: Connect to Location Manager
+activate LM
+LM --> CS: Connected
+CS -> MA: Service Started(WarmedUP)
+MA -> MA: Enable buttons
+U -> MA: Start Capturing Locations
+MA -> CS: Send BroadCast message to start Capturing Locations
+activate CS
+CS -> CS: Register onLocationChanged Listener
+CS -> LM: get Locations at the frequency of capture frequency (eg. 5 Seconds)
+activate LM
+CS -> CS: Make Capturing Service as foreground Service
+CS --> MA: Status Capturing
+
+note over MA 
+	Check if auto update is enabled,
+	if enabled set alarm to start UploadService after
+	current time + updateFrequency 
+end note
+
+MA -> MA: Change button state
+LM --> CS: After 5 seconds, new location
+
+note over LM: Running in background
+note over CS: Running in background
+
+U -> MA: Close App
+deactivate MA
+destroy MA
+autonumber 10 5 " After " 
+LM --> CS: seconds, new location
+LM --> CS: seconds, new location
+LM --> CS: seconds, new location
+LM --> CS: seconds, new location
+@enduml

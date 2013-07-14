@@ -1,0 +1,24 @@
+@startuml
+class UploadService {
+	~TrackMeDBHelper myLocationDB
+	~TrackMeDB db
+	-String captureServiceStatus
+	-PendingIntent piAutoUpdate
+	-boolean threadRunning
+	+IBinder onBind(Intent intent)
+	+{static}boolean pendingIntentExists(Context context, Intent intent)
+	+{static}void startAlarm(Context context, PendingIntent pi)
+	+{static}void updateAlarm(Context context)
+	+void onCreate()
+	+int onStartCommand(Intent intent, int flags, int startId)
+	-void setForegroundService()
+	-void setAutoUpload(boolean autoUpdate, boolean captureLocations)
+	-void uploadeSession()
+	-void clearDB(long time)
+	-void uploadPossible()
+	+void onDestroy()
+}
+abstract class Service {
+}
+Service <|-- UploadService
+@enduml
