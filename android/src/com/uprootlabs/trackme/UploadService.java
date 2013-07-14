@@ -143,7 +143,7 @@ public final class UploadService extends Service {
 
   public static boolean pendingIntentExists(final Context context) {
     final Intent intent = new Intent(context, UploadService.class);
-    final PendingIntent pi = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE);
+    final PendingIntent pi = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_ONE_SHOT);
     return (pi != null);
   }
 
@@ -155,6 +155,8 @@ public final class UploadService extends Service {
     final AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
     alarmManager.set(alarmType, SystemClock.elapsedRealtime() + updateFrequency, piAutoUpdate);
+
+    Log.d(UPLOAD_SERVICE_TAG, "Auto Update Set");
   }
 
   public static void cancelUploadAlarm(final Context context) {
@@ -217,7 +219,6 @@ public final class UploadService extends Service {
         final int updateFrequence = myPreference.getUpdateFrequency();
         setUploadAlarm(this, AUTO_UPLOAD, updateFrequence);
       }
-      Log.d(UPLOAD_SERVICE_TAG, "Auto Update Set");
     }
   }
 

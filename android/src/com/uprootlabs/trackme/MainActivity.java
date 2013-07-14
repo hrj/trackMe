@@ -195,9 +195,7 @@ public final class MainActivity extends Activity {
       final int updateFrequency = myPreference.getUpdateFrequency();
 
       if (!UploadService.pendingIntentExists(this)) {
-        UploadService.setUploadAlarm(this, UploadService.MANUAL_UPLOAD, updateFrequency);
-
-        Log.d(MAIN_ACTIVITY_TAG, "Auto Update Set");
+        UploadService.setUploadAlarm(this, UploadService.AUTO_UPLOAD, updateFrequency);
       }
 
     }
