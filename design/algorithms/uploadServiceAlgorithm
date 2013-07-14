@@ -1,0 +1,78 @@
+Upload Locations
+
+clearUploadID() {
+	update uploadID = null where uploadID != null in locationsTable
+}
+
+getQueuedLocations(uploadTime) {
+	getLocationCount(ts<uploadTime)
+}
+
+uploadPossible(uploadTime) {
+	userDetailsNotNull() and getQueuedLocationsCount(uploadTime) > 0 and isNetworkAvailable()
+}	
+
+generateUploadID() {
+	getSharedPreference and increment it
+}
+
+updateBatchID(batchIDs, sessionIDs, uploadID) {
+	assign batchID to only those locations that do not have batchID
+}
+
+assignUploadID(uploadID) {
+	update MAX_LOCATIONS_PER_UPLOAD locations in one query
+}
+
+getLocationsAsXML(uploadTime) {
+	uploadID = getNewUploadID();
+	assignUploadID(uploadID)
+	locationsCursor = getLocationsByUploadID(uploadID)
+	List<String> sessionIDs = getSessions(uploadID, locationsCursor)
+	List<String> batchIDs = getLastBatchID(sessoinIDs)
+	updateBatchID(batchIDs, sessionIDs, uploadID)
+	XML = prepareXML(locationsCursor)
+	return XML
+}
+
+	if(Manual upload) {
+		uploadTime = Current time 
+	} else { 
+		uploadTime = time specified in Intent
+  	set an alarm to start upload after updateFrequency mins
+  }
+
+if uploadPossible(uploadTime) {
+	Disallow changes in preferences
+	new thread for upload if upload not happening {
+		if the user is a valid one {
+			clearUploadID()
+			do {	
+				getLocationsAsXML(uploadTime)
+				compress the xml string
+				prepare http object
+				while(retryCount < MAX_RETRY) {
+					send locations to server
+					wait for server response
+					if (connection timeout or could not connect to the server) {
+						retryCount += 1	
+						errorExit = true
+					} else {
+						read response code
+						errorExit = false
+						retryCount = MAX_RETRY
+					}
+				}
+				if(!errorExit){
+					if(locations uploaded successfully) {
+						moveLocations to its respective table which is named after its sessionID
+					} else {
+						archive these locations
+					}
+				}
+			} while(getQueuedLocationsCount > 0 and !errorExit)
+		} else {
+			show error that userID or passKey Invalid
+		}
+	} 
+}
