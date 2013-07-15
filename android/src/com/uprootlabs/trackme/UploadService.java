@@ -163,6 +163,8 @@ public final class UploadService extends Service {
     final Intent alarmIntent = new Intent(context, UploadService.class);
     final PendingIntent piCancelAlarm = PendingIntent.getService(context, 0, alarmIntent, PendingIntent.FLAG_ONE_SHOT);
     piCancelAlarm.cancel();
+
+    Log.d(UPLOAD_SERVICE_TAG, "Alarm Cancelled");
   }
 
   @Override

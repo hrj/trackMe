@@ -9,6 +9,7 @@ public class OnBoot extends BroadcastReceiver {
   private final String ON_BOOT_TAG = "onBoot";
   private final String onBoot = "android.intent.action.BOOT_COMPLETED";
   private final String onNetworkChange = "android.net.conn.CONNECTIVITY_CHANGE";
+  private MyPreference myPreference;
 
   private void startUpload(final Context context) {
 
@@ -29,13 +30,15 @@ public class OnBoot extends BroadcastReceiver {
   @Override
   public void onReceive(final Context context, final Intent intent) {
     final String broadCastAction = intent.getAction();
+    myPreference = new MyPreference(context);
     if (broadCastAction.equals(onBoot)) {
 
-      startUpload(context);
+      if (myPreference.isAutoUpdateSet())
+        startUpload(context);
 
     } else if (broadCastAction.equals(onNetworkChange)) {
 
-      if (UploadService.isNetworkAvailable(context)) {
+      if (UploadService.isNetworkAvailable(context) && myPreference.isAutoUpdateSet()) {
 
         Log.d(ON_BOOT_TAG, "Net available");
 
