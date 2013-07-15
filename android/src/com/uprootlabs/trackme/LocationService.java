@@ -156,7 +156,7 @@ public final class LocationService extends Service implements LocationListener, 
     Log.d(LOCATION_SERVICE_TAG, "From setForegroundService");
     final Intent intentNotification = new Intent(this, MainActivity.class);
     final PendingIntent pi = PendingIntent.getActivity(this, 1, intentNotification, 0);
-    notification = new Notification(R.drawable.ic_launcher, "Capturing", System.currentTimeMillis());
+    notification = new Notification(R.drawable.capturing, "Capturing", System.currentTimeMillis());
     notification.setLatestEventInfo(this, "TrackMe", "Capturing Locatoins", pi);
     notification.flags |= Notification.FLAG_ONGOING_EVENT;
 
