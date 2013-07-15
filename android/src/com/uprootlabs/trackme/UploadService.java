@@ -163,6 +163,8 @@ public final class UploadService extends Service {
     final Intent alarmIntent = new Intent(context, UploadService.class);
     final PendingIntent piCancelAlarm = PendingIntent.getService(context, 0, alarmIntent, PendingIntent.FLAG_ONE_SHOT);
     piCancelAlarm.cancel();
+
+    Log.d(UPLOAD_SERVICE_TAG, "Alarm Cancelled");
   }
 
   @Override
@@ -207,7 +209,7 @@ public final class UploadService extends Service {
   private void setForegroundService() {
     final Intent intentNotification = new Intent(this, MainActivity.class);
     final PendingIntent pi = PendingIntent.getActivity(this, 1, intentNotification, 0);
-    final Notification notification = new Notification(R.drawable.ic_launcher, "Uploading", System.currentTimeMillis());
+    final Notification notification = new Notification(R.drawable.uploading, "Uploading", System.currentTimeMillis());
     notification.setLatestEventInfo(this, "TrackMe", "Uploading Locations", pi);
     notification.flags |= Notification.FLAG_ONGOING_EVENT;
     startForeground(2, notification);
@@ -308,7 +310,7 @@ public final class UploadService extends Service {
       final Intent intentNotification = new Intent(this, MainActivity.class);
       final PendingIntent pi = PendingIntent.getActivity(this, 1, intentNotification, 0);
       final NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-      final Notification notification = new Notification(R.drawable.ic_launcher, "Upload Failed", System.currentTimeMillis());
+      final Notification notification = new Notification(R.drawable.uploading, "Upload Failed", System.currentTimeMillis());
       notification.setLatestEventInfo(this, "UploadFailed", "Unknown Server Error", pi);
       notification.flags |= Notification.FLAG_AUTO_CANCEL;
       notificationManager.notify(9, notification);
